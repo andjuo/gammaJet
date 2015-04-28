@@ -575,7 +575,7 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     // Get RecHits in HB and HE
     edm::Handle<edm::SortedCollection<HBHERecHit,edm::StrictWeakOrdering<HBHERecHit>>> hbhereco;
     iEvent.getByToken(tok_HBHE_,hbhereco);
-    if(!hbhereco.isValid() && !workOnAOD_) {
+    if(!hbhereco.isValid() && (workOnAOD_!=1)) {
       edm::LogWarning("GammaJetAnalysis") << "Could not find HBHERecHit named "
 					  << hbheRecHitName_;
       return;
@@ -584,7 +584,7 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     // Get RecHits in HF
     edm::Handle<edm::SortedCollection<HFRecHit,edm::StrictWeakOrdering<HFRecHit>>> hfreco;
     iEvent.getByToken(tok_HF_,hfreco);
-    if(!hfreco.isValid() && !workOnAOD_) {
+    if(!hfreco.isValid() && (workOnAOD_!=1)) {
       edm::LogWarning("GammaJetAnalysis") << "Could not find HFRecHit named "
 					  << hfRecHitName_;
       return;
@@ -593,7 +593,7 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     // Get RecHits in HO
     edm::Handle<edm::SortedCollection<HORecHit,edm::StrictWeakOrdering<HORecHit>>> horeco;
     iEvent.getByToken(tok_HO_,horeco);
-    if(!horeco.isValid() && !workOnAOD_) {
+    if(!horeco.isValid() && (workOnAOD_!=1)) {
       edm::LogWarning("GammaJetAnalysis") << "Could not find HORecHit named "
 					  << hoRecHitName_;
       return;
@@ -1563,7 +1563,7 @@ GammaJetAnalysis::endJob() {
     misc_tree_->Branch("ignoreHLT",&ignoreHLT_,"ignoreHLT/O");
     misc_tree_->Branch("doPFJets",&doPFJets_,"doPFJets/O");
     misc_tree_->Branch("doGenJets",&doGenJets_,"doGenJets/O");
-    misc_tree_->Branch("workOnAOD",&workOnAOD_,"workOnAOD/O");
+    misc_tree_->Branch("workOnAOD",&workOnAOD_,"workOnAOD/I");
     misc_tree_->Branch("photonTriggerNames",&photonTrigNamesV_);
     misc_tree_->Branch("jetTriggerNames",&jetTrigNamesV_);
     misc_tree_->Branch("nProcessed",&nProcessed_,"nProcessed/l");
