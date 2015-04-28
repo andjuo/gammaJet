@@ -343,9 +343,10 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
       const std::vector<std::string> *trNames= & evTrigNames.triggerNames();
       for (size_t i=0; i<trNames->size(); ++i) {
 	int printName= (debugHLTTrigNames==2) ? 1:0;
-	if (trNames->at(i).find("_Photon")!=std::string::npos) printName=1;
+	if (trNames->at(i).find("_Photon")!=std::string::npos) printName=2;
 	if (printName) {
-	  edm::LogInfo("GammaJetAnalysis") << " - " << trNames->at(i);
+	  std::string star=(printName==2) ? "  ***" : "";
+	  edm::LogInfo("GammaJetAnalysis") << " - " << trNames->at(i) << star;
 	}
       }
       edm::LogInfo("GammaJetAnalysis") << " ";
