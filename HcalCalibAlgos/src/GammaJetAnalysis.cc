@@ -193,7 +193,7 @@ GammaJetAnalysis::~GammaJetAnalysis() {}
 void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup) { 
   nProcessed_++;
 
-  edm::LogInfo("GammaJetAnalysis") << "nProcessed=" << nProcessed_ << "\n";
+  if (debug_>0) edm::LogInfo("GammaJetAnalysis") << "nProcessed=" << nProcessed_ << "\n";
 
   // 1st. Get Photons //
   edm::Handle<reco::PhotonCollection> photons;
@@ -210,7 +210,7 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
   }
 
   nPhotons_= photons->size();
-  edm::LogInfo("GammaJetAnalysis") << "nPhotons_=" << nPhotons_;
+  if (debug_>0) edm::LogInfo("GammaJetAnalysis") << "nPhotons_=" << nPhotons_;
 
   // Get photon quality flags
   edm::Handle<edm::ValueMap<Bool_t> > loosePhotonQual, tightPhotonQual;
