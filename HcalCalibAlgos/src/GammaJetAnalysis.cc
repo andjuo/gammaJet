@@ -113,6 +113,7 @@ GammaJetAnalysis::GammaJetAnalysis(const edm::ParameterSet& iConfig) {
   eventWeight_ = 1.0;
   eventPtHat_ = 0.;
   nProcessed_ = 0;
+  nSelected_ = 0;
 
   //Get the tokens
   // FAST FIX
@@ -1287,6 +1288,7 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
 
     // fill photon+jet variables
     pf_tree_->Fill();
+    nSelected_++;
     }
   }
   return;
@@ -1570,6 +1572,7 @@ GammaJetAnalysis::endJob() {
     misc_tree_->Branch("photonTriggerNames",&photonTrigNamesV_);
     misc_tree_->Branch("jetTriggerNames",&jetTrigNamesV_);
     misc_tree_->Branch("nProcessed",&nProcessed_,"nProcessed/l");
+    misc_tree_->Branch("nSelected",&nSelected_,"nSelected/l");
     if (hJet1Pt) hJet1Pt->Write();
     if (hJet2Pt) hJet2Pt->Write();
     if (hJet3Pt) hJet3Pt->Write();
@@ -1586,6 +1589,11 @@ GammaJetAnalysis::endJob() {
     misc_tree_->Fill();
     misc_tree_->Write();
     rootfile_->cd();
+  }
+
+  if ((nProcessed_>0) && (nSelected_==0)) {
+    edm::LogWarning("GammaJetAnalysis") << "nProcessed=" << nProcessed_
+					<< ", nSelected=" << nSelected_;
   }
 
   rootfile_->Close();
