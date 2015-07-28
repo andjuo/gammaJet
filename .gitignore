@@ -20,7 +20,10 @@
 *.out
 *.app
 
-
 # Temporary files
 *~
 *_C.d
+
+# Python files
+*.pyc
+__init__.py
