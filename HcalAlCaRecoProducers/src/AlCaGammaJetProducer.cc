@@ -294,7 +294,7 @@ void AlCaGammaJetProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
   //std::auto_ptr<std::vector<Bool_t> > miniTightPhoton(new std::vector<Bool_t>());
   std::auto_ptr<edm::ValueMap<Bool_t> > miniLoosePhoton(new edm::ValueMap<Bool_t>());
   std::auto_ptr<edm::ValueMap<Bool_t> > miniTightPhoton(new edm::ValueMap<Bool_t>());
-
+  std::vector<Bool_t> looseFlags, tightFlags;
 
   // See if this event is useful
   bool accept = select(photon, pfjets);
@@ -361,8 +361,6 @@ void AlCaGammaJetProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
     edm::Handle<edm::ValueMap<Bool_t> > tightPhotonQual;
     iEvent.getByToken(tok_tightPhoton_, tightPhotonQual);
 
-    std::vector<Bool_t> looseFlags, tightFlags;
-
     if (loosePhotonQual.isValid() && tightPhotonQual.isValid()) {
       //miniLoosePhoton->reserve(miniPhotonCollection->size());
       //miniTightPhoton->reserve(miniPhotonCollection->size());
@@ -384,17 +382,12 @@ void AlCaGammaJetProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
 	  tightFlags.push_back((*tightPhotonQual)[photonRef]);
 	}
       }
-      edm::ValueMap<Bool_t>::Filler looseFiller(*miniLoosePhoton);
-      edm::ValueMap<Bool_t>::Filler tightFiller(*miniTightPhoton);
-      looseFiller.insert(miniPhotonCollection, looseFlags.begin(), looseFlags.end());
-      looseFiller.fill();
-      tightFiller.insert(miniPhotonCollection, tightFlags.begin(), tightFlags.end());
-      tightFiller.fill();
     }
   }
 
   //Put them in the event
-  iEvent.put( miniPhotonCollection,      labelPhoton_.encode());
+  edm::OrphanHandle<reco::PhotonCollection> outputPhotonHandle =
+    iEvent.put( miniPhotonCollection,      labelPhoton_.encode());
   iEvent.put( miniPFjetCollection,       labelPFJet_.encode());
   iEvent.put( miniHBHECollection,        labelHBHE_.encode());
   iEvent.put( miniHFCollection,          labelHF_.encode());
@@ -407,6 +400,14 @@ void AlCaGammaJetProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
   iEvent.put( miniRhoCollection,         labelRho_.encode());
   iEvent.put( miniConversionCollection,  labelConv_.encode());
   iEvent.put( miniBeamSpotCollection,    labelBeamSpot_.encode());
+
+  edm::ValueMap<Bool_t>::Filler looseIDFiller(*miniLoosePhoton);
+  edm::ValueMap<Bool_t>::Filler tightIDFiller(*miniTightPhoton);
+  looseIDFiller.insert(outputPhotonHandle,looseFlags.begin(),looseFlags.end());
+  looseIDFiller.fill();
+  tightIDFiller.insert(outputPhotonHandle,tightFlags.begin(),tightFlags.end());
+  tightIDFiller.fill();
+
   iEvent.put( miniLoosePhoton,           labelLoosePhot_.encode());
   iEvent.put( miniTightPhoton,           labelTightPhot_.encode());
 

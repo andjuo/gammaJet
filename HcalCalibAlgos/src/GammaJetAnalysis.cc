@@ -157,7 +157,7 @@ GammaJetAnalysis::GammaJetAnalysis(const edm::ParameterSet& iConfig) {
     tok_HF_          = consumes<edm::SortedCollection<HFRecHit,edm::StrictWeakOrdering<HFRecHit> > >(edm::InputTag(prod,hfRecHitName_,an));
     tok_HO_          = consumes<edm::SortedCollection<HORecHit,edm::StrictWeakOrdering<HORecHit> > >(edm::InputTag(prod,hoRecHitName_,an));
     tok_loosePhoton_ = consumes<edm::ValueMap<Bool_t> >(edm::InputTag(prod,edm::InputTag("PhotonIDProdGED","PhotonCutBasedIDLoose").encode(),an));
-    tok_tightPhoton_ = consumes<edm::ValueMap<Bool_t> >(edmInputTag(prod,edm::InputTag("PhotonIDProdGED:PhotonCutBasedIDTight").encode(),an));
+    tok_tightPhoton_ = consumes<edm::ValueMap<Bool_t> >(edm::InputTag(prod,edm::InputTag("PhotonIDProdGED:PhotonCutBasedIDTight").encode(),an));
     //tok_loosePhotonV_ = consumes<std::vector<Bool_t> >(edm::InputTag(prod,photonIDLooseCollName_.encode(),an));
     //tok_tightPhotonV_ = consumes<std::vector<Bool_t> >(edm::InputTag(prod,photonIDTightCollName_.encode(),an));
     tok_PFCand_      = consumes<reco::PFCandidateCollection>(edm::InputTag("particleFlow"));
@@ -535,7 +535,7 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     edm::Ref<reco::PhotonCollection> photonRef(photons, photon_tag.idx());
     HERE(Form("got photon ref, photon_tag.idx()=%d",photon_tag.idx()));
 
-    std::cout << "loosePhotonQual->at(photon_tag.idx())=" << loosePhotonQual->at(photon_tag.idx()) << std::endl;
+    //std::cout << "loosePhotonQual->at(photon_tag.idx())=" << (*loosePhotonQual)[photonRef] << std::endl;
 
     tagPho_idLoose_ = (loosePhotonQual.isValid()) ? (*loosePhotonQual)[photonRef] : -1;
     tagPho_idTight_ = (tightPhotonQual.isValid()) ? (*tightPhotonQual)[photonRef] : -1;
@@ -1578,6 +1578,7 @@ GammaJetAnalysis::endJob() {
   if(doPFJets_){
     pf_tree_->Write();
   }
+  std::cout << "nSelected=" << nSelected_ << std::endl;
   // write miscItems
   // Save info about the triggers and other misc items
   {
