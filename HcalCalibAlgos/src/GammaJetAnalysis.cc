@@ -21,8 +21,8 @@
 #include <boost/regex.hpp>
 #include "TH1D.h"
 
-inline void HERE(const char *msg) {
-  if (0 && msg) edm::LogWarning("GammaJetAnalysis") << msg;
+inline void HERE(const char *msg, int show=1) {
+  if (show && msg) edm::LogWarning("GammaJetAnalysis") << msg;
 }
 
 double getNeutralPVCorr(double eta, int intNPV, double area, bool isMC_) {
@@ -156,10 +156,10 @@ GammaJetAnalysis::GammaJetAnalysis(const edm::ParameterSet& iConfig) {
     tok_HBHE_        = consumes<edm::SortedCollection<HBHERecHit,edm::StrictWeakOrdering<HBHERecHit> > >(edm::InputTag(prod,hbheRecHitName_,an));
     tok_HF_          = consumes<edm::SortedCollection<HFRecHit,edm::StrictWeakOrdering<HFRecHit> > >(edm::InputTag(prod,hfRecHitName_,an));
     tok_HO_          = consumes<edm::SortedCollection<HORecHit,edm::StrictWeakOrdering<HORecHit> > >(edm::InputTag(prod,hoRecHitName_,an));
-    //tok_loosePhoton_ = consumes<edm::ValueMap<Bool_t> >(edm::InputTag("PhotonIDProdGED","PhotonCutBasedIDLoose"));
-    //tok_tightPhoton_ = consumes<edm::ValueMap<Bool_t> >(edm::InputTag("PhotonIDProdGED:PhotonCutBasedIDTight"));
-    tok_loosePhotonV_ = consumes<std::vector<Bool_t> >(edm::InputTag(prod,photonIDLooseCollName_.encode(),an));
-    tok_tightPhotonV_ = consumes<std::vector<Bool_t> >(edm::InputTag(prod,photonIDTightCollName_.encode(),an));
+    tok_loosePhoton_ = consumes<edm::ValueMap<Bool_t> >(edm::InputTag(prod,edm::InputTag("PhotonIDProdGED","PhotonCutBasedIDLoose").encode(),an));
+    tok_tightPhoton_ = consumes<edm::ValueMap<Bool_t> >(edmInputTag(prod,edm::InputTag("PhotonIDProdGED:PhotonCutBasedIDTight").encode(),an));
+    //tok_loosePhotonV_ = consumes<std::vector<Bool_t> >(edm::InputTag(prod,photonIDLooseCollName_.encode(),an));
+    //tok_tightPhotonV_ = consumes<std::vector<Bool_t> >(edm::InputTag(prod,photonIDTightCollName_.encode(),an));
     tok_PFCand_      = consumes<reco::PFCandidateCollection>(edm::InputTag("particleFlow"));
     //tok_PFCand_      = consumes<reco::PFCandidateCollection>(edm::InputTag(prod,"particleFlow",an));
     tok_PV_      = consumes<reco::VertexCollection>(edm::InputTag(prod,pvCollName_,an));
@@ -215,7 +215,15 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
 
   // Get photon quality flags
   edm::Handle<edm::ValueMap<Bool_t> > loosePhotonQual, tightPhotonQual;
-  edm::Handle<std::vector<Bool_t> > loosePhotonQual_Vec, tightPhotonQual_Vec;
+  //edm::Handle<std::vector<Bool_t> > loosePhotonQual_Vec, tightPhotonQual_Vec;
+  iEvent.getByToken(tok_loosePhoton_, loosePhotonQual);
+  iEvent.getByToken(tok_tightPhoton_, tightPhotonQual);
+  if (!loosePhotonQual.isValid() || !tightPhotonQual.isValid()) {
+    //edm::LogWarning("GammaJetAnalysis")
+      std::cout << "Failed to get photon quality flags";
+    return;
+  }
+  /*
   if (workOnAOD_ < 2) {
     iEvent.getByToken(tok_loosePhoton_, loosePhotonQual);
     iEvent.getByToken(tok_tightPhoton_, tightPhotonQual);
@@ -232,6 +240,7 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
       return;
     }
   }
+  */
 
   // sort photons by Et //
   // counter is needed later to get the reference to the ptr
@@ -522,6 +531,16 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     tagPho_ConvSafeEleVeto_ = -999;
 
     HERE("get id");
+    HERE(Form("new code! loose photon qual size=%d",int(loosePhotonQual->size())));
+    edm::Ref<reco::PhotonCollection> photonRef(photons, photon_tag.idx());
+    HERE(Form("got photon ref, photon_tag.idx()=%d",photon_tag.idx()));
+
+    std::cout << "loosePhotonQual->at(photon_tag.idx())=" << loosePhotonQual->at(photon_tag.idx()) << std::endl;
+
+    tagPho_idLoose_ = (loosePhotonQual.isValid()) ? (*loosePhotonQual)[photonRef] : -1;
+    tagPho_idTight_ = (tightPhotonQual.isValid()) ? (*tightPhotonQual)[photonRef] : -1;
+
+    /*
     if (workOnAOD_ < 2) {
       HERE(Form("workOnAOD_<2. loose photon qual size=%d",int(loosePhotonQual->size())));
 
@@ -537,6 +556,7 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
       tagPho_idLoose_ = (loosePhotonQual_Vec.isValid()) ? loosePhotonQual_Vec->at(photon_tag.idx()) : -1;
       tagPho_idTight_ = (tightPhotonQual_Vec.isValid()) ? tightPhotonQual_Vec->at(photon_tag.idx()) : -1; 
     }
+    */
 
     if (debug_>1) edm::LogInfo("GammaJetAnalysis")
 		    << "photon tag ID = " << tagPho_idLoose_ << " and "

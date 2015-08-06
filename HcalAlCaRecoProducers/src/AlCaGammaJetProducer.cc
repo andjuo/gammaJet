@@ -115,8 +115,10 @@ AlCaGammaJetProducer::AlCaGammaJetProducer(const edm::ParameterSet& iConfig) : n
   produces<edm::SortedCollection<HFRecHit,edm::StrictWeakOrdering<HFRecHit>>>(labelHF_.encode());
   produces<edm::SortedCollection<HORecHit,edm::StrictWeakOrdering<HORecHit>>>(labelHO_.encode());
   produces<edm::TriggerResults>(labelTrigger_.encode());
-  produces<std::vector<Bool_t>>(labelLoosePhot_.encode());
-  produces<std::vector<Bool_t>>(labelTightPhot_.encode());
+  //produces<std::vector<Bool_t>>(labelLoosePhot_.encode());
+  //produces<std::vector<Bool_t>>(labelTightPhot_.encode());
+  produces<edm::ValueMap<Bool_t> >(labelLoosePhot_.encode());
+  produces<edm::ValueMap<Bool_t> >(labelTightPhot_.encode());
   produces<double>(labelRho_.encode());
   produces<reco::PFCandidateCollection>(labelPFCandidate_.encode());
   produces<reco::VertexCollection>(labelVertex_.encode());
@@ -288,8 +290,10 @@ void AlCaGammaJetProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
   std::auto_ptr<edm::TriggerResults> miniTriggerCollection(new edm::TriggerResults);
 
   std::auto_ptr<double> miniRhoCollection(new double);
-  std::auto_ptr<std::vector<Bool_t> > miniLoosePhoton(new std::vector<Bool_t>());
-  std::auto_ptr<std::vector<Bool_t> > miniTightPhoton(new std::vector<Bool_t>());
+  //std::auto_ptr<std::vector<Bool_t> > miniLoosePhoton(new std::vector<Bool_t>());
+  //std::auto_ptr<std::vector<Bool_t> > miniTightPhoton(new std::vector<Bool_t>());
+  std::auto_ptr<edm::ValueMap<Bool_t> > miniLoosePhoton(new edm::ValueMap<Bool_t>());
+  std::auto_ptr<edm::ValueMap<Bool_t> > miniTightPhoton(new edm::ValueMap<Bool_t>());
 
 
   // See if this event is useful
@@ -351,25 +355,41 @@ void AlCaGammaJetProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
     *miniTriggerCollection = trigres;
     *miniRhoCollection = rho_val;
 
+    // clone Value map structure
     edm::Handle<edm::ValueMap<Bool_t> > loosePhotonQual;
     iEvent.getByToken(tok_loosePhoton_, loosePhotonQual);
     edm::Handle<edm::ValueMap<Bool_t> > tightPhotonQual;
     iEvent.getByToken(tok_tightPhoton_, tightPhotonQual);
+
+    std::vector<Bool_t> looseFlags, tightFlags;
+
     if (loosePhotonQual.isValid() && tightPhotonQual.isValid()) {
-      miniLoosePhoton->reserve(miniPhotonCollection->size());
-      miniTightPhoton->reserve(miniPhotonCollection->size());
+      //miniLoosePhoton->reserve(miniPhotonCollection->size());
+      //miniTightPhoton->reserve(miniPhotonCollection->size());
+      looseFlags.reserve(miniPhotonCollection->size());
+      tightFlags.reserve(miniPhotonCollection->size());
       for (int iPho=0; iPho<int(miniPhotonCollection->size()); ++iPho) {
 	edm::Ref<reco::PhotonCollection> photonRef(phoHandle,iPho);
 	if (!photonRef) {
 	  std::cout << "failed ref" << std::endl;
-	  miniLoosePhoton->push_back(-1);
-	  miniTightPhoton->push_back(-1);
+	  //miniLoosePhoton->push_back(-1);
+	  //miniTightPhoton->push_back(-1);
+	  looseFlags.push_back(false);
+	  tightFlags.push_back(false);
 	}
 	else {
-	  miniLoosePhoton->push_back((*loosePhotonQual)[photonRef]);
-	  miniTightPhoton->push_back((*tightPhotonQual)[photonRef]);
+	  //miniLoosePhoton->push_back((*loosePhotonQual)[photonRef]);
+	  //miniTightPhoton->push_back((*tightPhotonQual)[photonRef]);
+	  looseFlags.push_back((*loosePhotonQual)[photonRef]);
+	  tightFlags.push_back((*tightPhotonQual)[photonRef]);
 	}
       }
+      edm::ValueMap<Bool_t>::Filler looseFiller(*miniLoosePhoton);
+      edm::ValueMap<Bool_t>::Filler tightFiller(*miniTightPhoton);
+      looseFiller.insert(miniPhotonCollection, looseFlags.begin(), looseFlags.end());
+      looseFiller.fill();
+      tightFiller.insert(miniPhotonCollection, tightFlags.begin(), tightFlags.end());
+      tightFiller.fill();
     }
   }
 
