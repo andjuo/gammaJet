@@ -10,10 +10,12 @@ OutALCARECOHcalCalGammaJet_noDrop = cms.PSet(
     outputCommands = cms.untracked.vstring( 
                  'keep recoPhotonCores_*_*_*',
                  'keep recoSuperClusters_*_*_*',
+                 'keep recoCaloClusters_*_*_*', # needed for EG isoMapProd
                  'keep recoTracks_generalTracks_*_*',
                  'keep *_particleFlow_*_*',
                  'keep recoPFBlocks_particleFlowBlock_*_*',
                  'keep recoPFClusters_*_*_*',
+                 'keep *_fixedGridRhoFastjetAll_*_*', # needed for EG photonID
                  'keep *_GammaJetProd_*_*')
 )
 

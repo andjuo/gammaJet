@@ -14,6 +14,7 @@
 #include "DataFormats/DetId/interface/DetId.h"
 #include "DataFormats/EgammaCandidates/interface/Photon.h"
 #include "DataFormats/EgammaCandidates/interface/PhotonFwd.h"
+#include "DataFormats/EcalRecHit/interface/EcalRecHitCollections.h"
 #include "DataFormats/JetReco/interface/PFJetCollection.h"
 #include "DataFormats/HcalRecHit/interface/HBHERecHit.h"
 #include "DataFormats/HcalRecHit/interface/HFRecHit.h"
@@ -52,6 +53,9 @@ private:
   // ----------member data ---------------------------
   
   edm::InputTag   labelPhoton_, labelPFJet_, labelHBHE_, labelHF_, labelHO_, labelTrigger_, labelPFCandidate_, labelVertex_, labelPFMET_, labelGsfEle_, labelRho_, labelConv_, labelBeamSpot_, labelLoosePhot_, labelTightPhot_;
+  edm::InputTag labelReducedEcalRecHitEB_, labelReducedEcalRecHitEE_;
+  edm::InputTag labelReducedEcalRecHitES_;
+  edm::InputTag labelPhotonParticleBasedIsoInput_, labelPhotonParticleBasedIsoOutput_;
   double          minPtJet_, minPtPhoton_;
   int             nAll_, nSelect_;
   
@@ -60,6 +64,13 @@ private:
   edm::EDGetTokenT<edm::SortedCollection<HBHERecHit,edm::StrictWeakOrdering<HBHERecHit>>> tok_HBHE_;
   edm::EDGetTokenT<edm::SortedCollection<HFRecHit,edm::StrictWeakOrdering<HFRecHit>>>     tok_HF_;
   edm::EDGetTokenT<edm::SortedCollection<HORecHit,edm::StrictWeakOrdering<HORecHit>>>     tok_HO_;
+  // from RecoEGamma/PhotonIdentification/plugins/PhotonIDValueMapProducer.cc
+  //for AOD case
+  edm::EDGetTokenT<EcalRecHitCollection> tok_ebReducedRecHitCollection_;
+  edm::EDGetTokenT<EcalRecHitCollection> tok_eeReducedRecHitCollection_;
+  edm::EDGetTokenT<EcalRecHitCollection> tok_esReducedRecHitCollection_;
+  edm::EDGetTokenT<edm::ValueMap<std::vector<reco::PFCandidateRef > > > tok_particleBasedIsolation_;
+
   edm::EDGetTokenT<edm::TriggerResults>                                                   tok_TrigRes_;
   edm::EDGetTokenT<reco::PFCandidateCollection>                                           tok_PFCand_;
   edm::EDGetTokenT<reco::VertexCollection>                                                tok_Vertex_;
@@ -79,6 +90,11 @@ AlCaGammaJetProducer::AlCaGammaJetProducer(const edm::ParameterSet& iConfig) : n
   labelHBHE_       = iConfig.getParameter<edm::InputTag>("HBHEInput");
   labelHF_         = iConfig.getParameter<edm::InputTag>("HFInput");
   labelHO_         = iConfig.getParameter<edm::InputTag>("HOInput");
+  labelReducedEcalRecHitEB_ = iConfig.getParameter<edm::InputTag>("ReducedEcalRecHitsEBInput");
+  labelReducedEcalRecHitEE_ = iConfig.getParameter<edm::InputTag>("ReducedEcalRecHitsEEInput");
+  labelReducedEcalRecHitES_ = iConfig.getParameter<edm::InputTag>("ReducedEcalRecHitsESInput");
+  labelPhotonParticleBasedIsoInput_ = iConfig.getParameter<edm::InputTag>("PhotonParticleBasedIsoInput");
+  labelPhotonParticleBasedIsoOutput_ = iConfig.getParameter<edm::InputTag>("PhotonParticleBasedIsoOutput");
   labelTrigger_    = iConfig.getParameter<edm::InputTag>("TriggerResults");
   labelPFCandidate_= iConfig.getParameter<edm::InputTag>("particleFlowInput");
   labelVertex_     = iConfig.getParameter<edm::InputTag>("VertexInput");
@@ -97,6 +113,10 @@ AlCaGammaJetProducer::AlCaGammaJetProducer(const edm::ParameterSet& iConfig) : n
   tok_HBHE_   = consumes<edm::SortedCollection<HBHERecHit,edm::StrictWeakOrdering<HBHERecHit>>>(labelHBHE_);
   tok_HF_     = consumes<edm::SortedCollection<HFRecHit,edm::StrictWeakOrdering<HFRecHit>>>(labelHF_);
   tok_HO_     = consumes<edm::SortedCollection<HORecHit,edm::StrictWeakOrdering<HORecHit>>>(labelHO_);
+  tok_ebReducedRecHitCollection_ = consumes<EcalRecHitCollection>(labelReducedEcalRecHitEB_);
+  tok_eeReducedRecHitCollection_ = consumes<EcalRecHitCollection>(labelReducedEcalRecHitEE_);
+  tok_esReducedRecHitCollection_ = consumes<EcalRecHitCollection>(labelReducedEcalRecHitES_);
+  tok_particleBasedIsolation_ = consumes<edm::ValueMap<std::vector<reco::PFCandidateRef > > >(labelPhotonParticleBasedIsoInput_);
   tok_TrigRes_= consumes<edm::TriggerResults>(labelTrigger_);
   tok_PFCand_ = consumes<reco::PFCandidateCollection>(labelPFCandidate_);
   tok_Vertex_ = consumes<reco::VertexCollection>(labelVertex_);
@@ -114,12 +134,16 @@ AlCaGammaJetProducer::AlCaGammaJetProducer(const edm::ParameterSet& iConfig) : n
   produces<edm::SortedCollection<HBHERecHit,edm::StrictWeakOrdering<HBHERecHit>>>(labelHBHE_.encode());
   produces<edm::SortedCollection<HFRecHit,edm::StrictWeakOrdering<HFRecHit>>>(labelHF_.encode());
   produces<edm::SortedCollection<HORecHit,edm::StrictWeakOrdering<HORecHit>>>(labelHO_.encode());
+  produces<EcalRecHitCollection>(labelReducedEcalRecHitEB_.encode());
+  produces<EcalRecHitCollection>(labelReducedEcalRecHitEE_.encode());
+  produces<EcalRecHitCollection>(labelReducedEcalRecHitES_.encode());
+  produces<edm::ValueMap<std::vector<reco::PFCandidateRef > > >(labelPhotonParticleBasedIsoOutput_.encode());
   produces<edm::TriggerResults>(labelTrigger_.encode());
   //produces<std::vector<Bool_t>>(labelLoosePhot_.encode());
   //produces<std::vector<Bool_t>>(labelTightPhot_.encode());
   produces<edm::ValueMap<Bool_t> >(labelLoosePhot_.encode());
   produces<edm::ValueMap<Bool_t> >(labelTightPhot_.encode());
-  produces<double>(labelRho_.encode());
+  //produces<double>(labelRho_.encode()).setBranchAlias("fixedGridRhoFastjetAll");
   produces<reco::PFCandidateCollection>(labelPFCandidate_.encode());
   produces<reco::VertexCollection>(labelVertex_.encode());
   produces<reco::PFMETCollection>(labelPFMET_.encode());
@@ -230,6 +254,30 @@ void AlCaGammaJetProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
   }
   const edm::SortedCollection<HFRecHit,edm::StrictWeakOrdering<HFRecHit> > Hithf = *(hf.product());
 
+  edm::Handle<EcalRecHitCollection> h_ReducedEcalRecHitsEB;
+  iEvent.getByToken(tok_ebReducedRecHitCollection_, h_ReducedEcalRecHitsEB);
+  if (!h_ReducedEcalRecHitsEB.isValid()) {
+    edm::LogWarning("AlCaGammaJet") << "AlCaGammaJetProducer: Error! can't get product " << labelReducedEcalRecHitEB_;
+    return;
+  }
+  const EcalRecHitCollection ECALRecHitsEB = *(h_ReducedEcalRecHitsEB.product());
+
+  edm::Handle<EcalRecHitCollection> h_ReducedEcalRecHitsEE;
+  iEvent.getByToken(tok_eeReducedRecHitCollection_, h_ReducedEcalRecHitsEE);
+  if (!h_ReducedEcalRecHitsEE.isValid()) {
+    edm::LogWarning("AlCaGammaJet") << "AlCaGammaJetProducer: Error! can't get product " << labelReducedEcalRecHitEE_;
+    return;
+  }
+  const EcalRecHitCollection ECALRecHitsEE = *(h_ReducedEcalRecHitsEE.product());
+
+  edm::Handle<EcalRecHitCollection> h_ReducedEcalRecHitsES;
+  iEvent.getByToken(tok_esReducedRecHitCollection_, h_ReducedEcalRecHitsES);
+  if (!h_ReducedEcalRecHitsES.isValid()) {
+    edm::LogWarning("AlCaGammaJet") << "AlCaGammaJetProducer: Error! can't get product " << labelReducedEcalRecHitES_;
+    return;
+  }
+  const EcalRecHitCollection ECALRecHitsES = *(h_ReducedEcalRecHitsES.product());
+
   edm::Handle<edm::TriggerResults> trig;
   iEvent.getByToken(tok_TrigRes_,trig);
   if (!trig.isValid()) {
@@ -280,6 +328,12 @@ void AlCaGammaJetProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
   std::auto_ptr<edm::SortedCollection<HBHERecHit,edm::StrictWeakOrdering<HBHERecHit>>>  miniHBHECollection(new edm::SortedCollection<HBHERecHit,edm::StrictWeakOrdering<HBHERecHit>>);
   std::auto_ptr<edm::SortedCollection<HORecHit,edm::StrictWeakOrdering<HORecHit>>>  miniHOCollection(new edm::SortedCollection<HORecHit,edm::StrictWeakOrdering<HORecHit>>);
   std::auto_ptr<edm::SortedCollection<HFRecHit,edm::StrictWeakOrdering<HFRecHit>>>  miniHFCollection(new edm::SortedCollection<HFRecHit,edm::StrictWeakOrdering<HFRecHit>>);
+  std::auto_ptr<EcalRecHitCollection> miniReducedEcalRecHitsEB(new EcalRecHitCollection);
+  std::auto_ptr<EcalRecHitCollection> miniReducedEcalRecHitsEE(new EcalRecHitCollection);
+  std::auto_ptr<EcalRecHitCollection> miniReducedEcalRecHitsES(new EcalRecHitCollection);
+  std::auto_ptr<edm::ValueMap<std::vector<reco::PFCandidateRef> > > miniPhotonIsoMap(new edm::ValueMap<std::vector<reco::PFCandidateRef> >);
+  std::vector<std::vector<reco::PFCandidateRef> > isoMapCandRefArr;
+
   std::auto_ptr<reco::GsfElectronCollection> miniGSFeleCollection(new reco::GsfElectronCollection);
   std::auto_ptr<reco::ConversionCollection> miniConversionCollection(new reco::ConversionCollection);
 
@@ -342,6 +396,18 @@ void AlCaGammaJetProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
       miniHFCollection->push_back(*hfItr);
     }
 
+    for (EcalRecHitCollection::const_iterator ebIt= ECALRecHitsEB.begin();
+	 ebIt!=ECALRecHitsEB.end(); ebIt++)
+      miniReducedEcalRecHitsEB->push_back(*ebIt);
+
+    for (EcalRecHitCollection::const_iterator eeIt= ECALRecHitsEE.begin();
+	 eeIt!=ECALRecHitsEE.end(); eeIt++)
+      miniReducedEcalRecHitsEE->push_back(*eeIt);
+
+    for (EcalRecHitCollection::const_iterator esIt= ECALRecHitsES.begin();
+	 esIt!=ECALRecHitsES.end(); esIt++)
+      miniReducedEcalRecHitsES->push_back(*esIt);
+
     for(reco::GsfElectronCollection::const_iterator gsfItr=gsfele.begin();
         gsfItr!=gsfele.end(); gsfItr++) {
       miniGSFeleCollection->push_back(*gsfItr);
@@ -383,6 +449,26 @@ void AlCaGammaJetProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
 	}
       }
     }
+
+    // Clone particle-based isolation map for photons
+    edm::Handle<edm::ValueMap<std::vector<reco::PFCandidateRef> > > h_particleBasedIsolationMap;
+    iEvent.getByToken(tok_particleBasedIsolation_, h_particleBasedIsolationMap);
+    if (!h_particleBasedIsolationMap.isValid()) {
+      edm::LogWarning("AlCaGammaJet") << "AlCaGammaJetProducer: Error! can't get product " << labelPhotonParticleBasedIsoInput_;
+      return;
+    }
+
+    isoMapCandRefArr.reserve(miniPhotonCollection->size());
+    for (int iPho=0; iPho<int(miniPhotonCollection->size()); ++iPho) {
+      edm::Ref<reco::PhotonCollection> photonRef(phoHandle,iPho);
+      if (!photonRef) {
+	std::cout << "failed to get photon ref (2)" << std::endl;
+	isoMapCandRefArr.push_back(std::vector<reco::PFCandidateRef>());
+      }
+      else {
+	isoMapCandRefArr.push_back((*h_particleBasedIsolationMap)[photonRef]);
+      }
+    }
   }
 
   //Put them in the event
@@ -392,14 +478,22 @@ void AlCaGammaJetProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
   iEvent.put( miniHBHECollection,        labelHBHE_.encode());
   iEvent.put( miniHFCollection,          labelHF_.encode());
   iEvent.put( miniHOCollection,          labelHO_.encode());
+  iEvent.put( miniReducedEcalRecHitsEB,  labelReducedEcalRecHitEB_.encode());
+  iEvent.put( miniReducedEcalRecHitsEE,  labelReducedEcalRecHitEE_.encode());
+  iEvent.put( miniReducedEcalRecHitsES,  labelReducedEcalRecHitES_.encode());
   iEvent.put( miniTriggerCollection,     labelTrigger_.encode());
   iEvent.put( miniPFCandCollection,      labelPFCandidate_.encode());
   iEvent.put( miniVtxCollection,         labelVertex_.encode());
   iEvent.put( miniPFMETCollection,       labelPFMET_.encode());
   iEvent.put( miniGSFeleCollection,      labelGsfEle_.encode());
-  iEvent.put( miniRhoCollection,         labelRho_.encode());
+  //iEvent.put( miniRhoCollection,         labelRho_.encode());
   iEvent.put( miniConversionCollection,  labelConv_.encode());
   iEvent.put( miniBeamSpotCollection,    labelBeamSpot_.encode());
+
+  edm::ValueMap<std::vector<reco::PFCandidateRef> >::Filler phoIsoMapFiller(*miniPhotonIsoMap);
+  phoIsoMapFiller.insert(outputPhotonHandle,isoMapCandRefArr.begin(),isoMapCandRefArr.end());
+  phoIsoMapFiller.fill();
+  iEvent.put( miniPhotonIsoMap,   labelPhotonParticleBasedIsoOutput_.encode() );
 
   edm::ValueMap<Bool_t>::Filler looseIDFiller(*miniLoosePhoton);
   edm::ValueMap<Bool_t>::Filler tightIDFiller(*miniTightPhoton);

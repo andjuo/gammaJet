@@ -7,6 +7,13 @@ GammaJetProd = cms.EDProducer("AlCaGammaJetProducer",
                               HBHEInput = cms.InputTag("hbhereco"),
                               HFInput = cms.InputTag("hfreco"),
                               HOInput = cms.InputTag("horeco"),
+                              ReducedEcalRecHitsEBInput = cms.InputTag("reducedEcalRecHitsEB"),
+                              ReducedEcalRecHitsEEInput = cms.InputTag("reducedEcalRecHitsEE"),
+                              ReducedEcalRecHitsESInput = cms.InputTag("reducedEcalRecHitsES"),
+                              PhotonParticleBasedIsoInput = cms.InputTag("particleBasedIsolation","gedPhotons"),
+                              # 5 ids are not allowed for collection InputTag
+                              # define a simple output tag
+                              PhotonParticleBasedIsoOutput = cms.InputTag("particleBasedIsolationForGedPhotons"),
                               METInput = cms.InputTag("pfMet"),
                               TriggerResults = cms.InputTag("TriggerResults::HLT"),
                               gsfeleInput = cms.InputTag("gedGsfElectrons"),
