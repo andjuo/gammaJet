@@ -155,7 +155,9 @@ private:
   std::string offlineBSName_;       // name of offline beam-spot
   std::string conversionCollName_;  // name of conversions collection
   std::string electronCollName_;    // electron collection name
-  edm::InputTag photonIDTightCollName_, photonIDLooseCollName_; // photon ID
+  edm::InputTag photonIDTightCollName_, photonIDLooseCollName_; // photon ID. Obsolete
+  edm::InputTag photonRun2IdTightCollName_, photonRun2IdMediumCollName_,
+    photonRun2IdLooseCollName_; // photon ID for Run2 from official tools
   std::string prodProcess_;         // the producer process for AOD=2
 
   bool allowNoPhoton_; // whether module is used for dijet analysis
@@ -179,8 +181,11 @@ private:
   edm::EDGetTokenT<edm::SortedCollection<HORecHit,edm::StrictWeakOrdering<HORecHit> > >     tok_HO_;
   edm::EDGetTokenT<edm::ValueMap<Bool_t> >          tok_loosePhoton_;
   edm::EDGetTokenT<edm::ValueMap<Bool_t> >          tok_tightPhoton_;
-  edm::EDGetTokenT<std::vector<Bool_t> >          tok_loosePhotonV_;
-  edm::EDGetTokenT<std::vector<Bool_t> >          tok_tightPhotonV_;
+  //edm::EDGetTokenT<std::vector<Bool_t> >          tok_loosePhotonV_; //no longer needed
+  //edm::EDGetTokenT<std::vector<Bool_t> >          tok_tightPhotonV_; //no longer needed
+  edm::EDGetTokenT<edm::ValueMap<Bool_t> >          tok_run2LooseId_;
+  edm::EDGetTokenT<edm::ValueMap<Bool_t> >          tok_run2MediumId_;
+  edm::EDGetTokenT<edm::ValueMap<Bool_t> >          tok_run2TightId_;
   edm::EDGetTokenT<reco::PFCandidateCollection>     tok_PFCand_;
   edm::EDGetTokenT<reco::VertexCollection>          tok_PV_;
   edm::EDGetTokenT<reco::GsfElectronCollection>     tok_GsfElec_;
@@ -230,9 +235,17 @@ private:
   float tagPho_pfiso_myneutral03_;
   std::vector<std::vector<float> >  tagPho_pfiso_mycharged03v_ ;
   float tagPho_pfiso_mycharged03_;
+  float tagPho_full5x5sigmaIetaIeta_;
+  float tagPho_chIso_, tagPho_nhIso_, tagPho_phIso_; // isolation from official tools
   int tagPho_pixelSeed_;
   int tagPho_ConvSafeEleVeto_;
   int tagPho_idTight_, tagPho_idLoose_;
+
+  // photonID flag based on info from the official tools for Run2 cut-based photonID
+  // Values:
+  //   -1 - not determined, 0 - fails looseID, 1 - looseID, 2 - mediumID, 3 -tightID
+  int tagPho_idRun2flag_;
+
   float tagPho_genPt_, tagPho_genEnergy_, tagPho_genEta_, tagPho_genPhi_;
   float tagPho_genDeltaR_;
 
