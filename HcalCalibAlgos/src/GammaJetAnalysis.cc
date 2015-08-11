@@ -405,7 +405,7 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
 
   HERE("start isolation");
 
-  tagPho_pfiso_mycharged03.clear();
+  tagPho_pfiso_mycharged03v_.clear();
 
   edm::Handle<std::vector<reco::GenJet>> genjets;
   edm::Handle<std::vector<reco::GenParticle> > genparticles;
@@ -490,7 +490,8 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     tagPho_TrkIsoHollowDR04_=0;
     tagPho_pfiso_myphoton03_=0;
     tagPho_pfiso_myneutral03_=0;
-    tagPho_pfiso_mycharged03.clear();
+    tagPho_pfiso_mycharged03v_.clear();
+    tagPho_pfiso_mycharged03_=0;
     tagPho_pixelSeed_=0;
     tagPho_ConvSafeEleVeto_=0;
     tagPho_idTight_=0;
@@ -523,7 +524,10 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     tagPho_pfiso_myphoton03_  = pfEcalIso(photon_tag.photon(), pfHandle, 0.3, 0.0, 0.070, 0.015, 0.0, 0.0, 0.0, reco::PFCandidate::gamma);
     tagPho_pfiso_myneutral03_ = pfHcalIso(photon_tag.photon(), pfHandle, 0.3, 0.0, reco::PFCandidate::h0);
     HERE("calc charged pfiso");
-    tagPho_pfiso_mycharged03.push_back(pfTkIsoWithVertex(photon_tag.photon(), pfHandle, pv, 0.3, 0.02, 0.02, 0.0, 0.2, 0.1, reco::PFCandidate::h));
+    tagPho_pfiso_mycharged03v_.push_back(pfTkIsoWithVertex(photon_tag.photon(), pfHandle, pv, 0.3, 0.02, 0.02, 0.0, 0.2, 0.1, reco::PFCandidate::h));
+    tagPho_pfiso_mycharged03_ = -1;
+    if (tagPho_pfiso_mycharged03v_.back().size()>0)
+      tagPho_pfiso_mycharged03_ = tagPho_pfiso_mycharged03v_.back().at(0);
 
     HERE("got isolation");
 
@@ -1359,7 +1363,8 @@ void GammaJetAnalysis::beginJob()
     tree->Branch("tagPho_TrkIsoHollowDR04",&tagPho_TrkIsoHollowDR04_, "tagPho_TrkIsoHollowDR04/F");
     tree->Branch("tagPho_pfiso_myphoton03",&tagPho_pfiso_myphoton03_, "tagPho_pfiso_myphoton03/F");
     tree->Branch("tagPho_pfiso_myneutral03",&tagPho_pfiso_myneutral03_, "tagPho_pfiso_myneutral03/F");
-    tree->Branch("tagPho_pfiso_mycharged03","std::vector<std::vector<float> >", &tagPho_pfiso_mycharged03);
+    tree->Branch("tagPho_pfiso_mycharged03",&tagPho_pfiso_mycharged03_, "tagPho_pfiso_mycharged03/F");
+    tree->Branch("tagPho_pfiso_mycharged03v","std::vector<std::vector<float> >", &tagPho_pfiso_mycharged03v_);
     tree->Branch("tagPho_pixelSeed",    &tagPho_pixelSeed_,    "tagPho_pixelSeed/I");
     tree->Branch("tagPho_ConvSafeEleVeto", &tagPho_ConvSafeEleVeto_, "tagPho_ConvSafeEleVeto/I");
     tree->Branch("tagPho_idTight",&tagPho_idTight_, "tagPho_idTight/I");

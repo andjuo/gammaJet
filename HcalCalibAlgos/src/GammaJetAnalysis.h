@@ -228,7 +228,8 @@ private:
   float tagPho_pt_, pho_2nd_pt_, tagPho_energy_, tagPho_eta_, tagPho_phi_, tagPho_sieie_;
   float tagPho_HoE_, tagPho_r9_, tagPho_EcalIsoDR04_, tagPho_HcalIsoDR04_, tagPho_HcalIsoDR0412_, tagPho_TrkIsoHollowDR04_, tagPho_pfiso_myphoton03_;
   float tagPho_pfiso_myneutral03_;
-  std::vector<std::vector<float> >  tagPho_pfiso_mycharged03 ;
+  std::vector<std::vector<float> >  tagPho_pfiso_mycharged03v_ ;
+  float tagPho_pfiso_mycharged03_;
   int tagPho_pixelSeed_;
   int tagPho_ConvSafeEleVeto_;
   int tagPho_idTight_, tagPho_idLoose_;
