@@ -2153,11 +2153,11 @@ int GammaJetAnalysis::loadEffectiveAreas(const std::string &filename,
 
   // Open the file with the effective area constants
   std::ifstream inputFile;
-  inputFile.open(filename.c_str());
+  inputFile.open(filename);
   if( !inputFile.is_open() ) {
     //throw cms::Exception("EffectiveAreas config failure")
     edm::LogWarning("GammaJetAnalysis")
-      << "failed to open the file " << filename_.Data() << std::endl;
+      << "failed to open the file " << filename << std::endl;
     return 0;
   }
 
@@ -2177,7 +2177,7 @@ int GammaJetAnalysis::loadEffectiveAreas(const std::string &filename,
     if( etaMin==undef || etaMax==undef || effArea==undef ) {
       //throw cms::Exception("EffectiveAreas config failure")
       edm::LogWarning("GammaJetAnalysis")
-	<< "wrong file format, file name " << filename_.Data() << std::endl;
+	<< "wrong file format, file name " << filename << std::endl;
       ok=0;
     }
 
