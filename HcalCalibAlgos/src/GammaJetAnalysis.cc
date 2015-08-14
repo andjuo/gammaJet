@@ -191,7 +191,8 @@ GammaJetAnalysis::GammaJetAnalysis(const edm::ParameterSet& iConfig) {
     //tok_PFCand_      = consumes<reco::PFCandidateCollection>(edm::InputTag(prod,"particleFlow",an));
     tok_PV_      = consumes<reco::VertexCollection>(edm::InputTag(prod,pvCollName_,an));
     tok_GsfElec_     = consumes<reco::GsfElectronCollection>(edm::InputTag(prod,electronCollName_,an));
-    tok_Rho_         = consumes<double>(edm::InputTag(prod,rhoCollection_.label(),an));
+    //tok_Rho_         = consumes<double>(edm::InputTag(prod,rhoCollection_.label(),an));
+    tok_Rho_         = consumes<double>(rhoCollection_);
     tok_Conv_        = consumes<reco::ConversionCollection>(edm::InputTag(prod,conversionCollName_,an));
     tok_BS_          = consumes<reco::BeamSpot>(edm::InputTag(prod,offlineBSName_,an));
     tok_PFMET_       = consumes<reco::PFMETCollection>(edm::InputTag(prod,pfMETColl.label(),an));
