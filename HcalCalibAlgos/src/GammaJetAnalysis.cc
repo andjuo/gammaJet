@@ -665,7 +665,13 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     tagPho_genEta_=0;
     tagPho_genPhi_=0;
     tagPho_genDeltaR_=0;
+    tagPho_isTrue_=UNMATCHED;
+    tagPho_isTrueAlternative_=UNMATCHED;
     if (doGenJets_) {
+      tagPho_isTrue_ = matchToTruth( *photon_tag.photon(), genparticles );
+      tagPho_isTrueAlternative_ = matchToTruthAlternative( *photon_tag.photon(),
+							   genparticles );
+
       tagPho_genDeltaR_=9999.;
       for (std::vector<reco::GenParticle>::const_iterator itmc=genparticles->begin();
 	   itmc!=genparticles->end(); itmc++) {
@@ -681,6 +687,7 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
 	  }
 	}
       }
+
     }
   }
   
@@ -1471,6 +1478,8 @@ void GammaJetAnalysis::beginJob()
       tree->Branch("tagPho_genEta",&tagPho_genEta_, "tagPho_genEta/F");
       tree->Branch("tagPho_genPhi",&tagPho_genPhi_, "tagPho_genPhi/F");
       tree->Branch("tagPho_genDeltaR",&tagPho_genDeltaR_,"tagPho_genDeltaR/F");
+      tree->Branch("tagPho_isTrue",&tagPho_isTrue_,"tagPho_isTrue/I");
+      tree->Branch("tagPho_isTrueAlternative",&tagPho_isTrueAlternative_,"tagPho_isTrueAlternative/I");
     }
       // counters
     tree->Branch("nPhotons",&nPhotons_, "nPhotons/I");
@@ -2196,7 +2205,114 @@ int GammaJetAnalysis::loadEffectiveAreas(const std::string &filename,
 }
 
 // ---------------------------------------------------------------------
+// Matching is copied from
+// https://github.com/ikrav/ElectronWork/blob/master/ElectronNtupler/plugins/PhotonNtuplerMVADemoMiniAOD.cc
 
+int GammaJetAnalysis::matchToTruth(const reco::Photon &pho,
+	   const edm::Handle<std::vector<reco::GenParticle>>  &genParticles)
+{
+  //
+  // Explicit loop and geometric matching method
+  //
+
+  // Find the closest status 1 gen photon to the reco photon
+  double dR = 999;
+  const reco::Candidate *closestPhoton = 0;
+  for(size_t i=0; i<genParticles->size();i++){
+    const reco::Candidate *particle = &(*genParticles)[i];
+    // Drop everything that is not photon or not status 1
+    if( abs(particle->pdgId()) != 22 || particle->status() != 1 )
+      continue;
+    //
+    double dRtmp = ROOT::Math::VectorUtil::DeltaR( pho.p4(), particle->p4() );
+    if( dRtmp < dR ){
+      dR = dRtmp;
+      closestPhoton = particle;
+    }
+  }
+  // See if the closest photon (if it exists) is close enough.
+  // If not, no match found.
+  if( !(closestPhoton != 0 && dR < 0.1) ) {
+    return UNMATCHED;
+  }
+
+  // Find ID of the parent of the found generator level photon match
+  int ancestorPID = -999;
+  int ancestorStatus = -999;
+  findFirstNonPhotonMother(closestPhoton, ancestorPID, ancestorStatus);
+
+  // Allowed parens: quarks pdgId 1-5, or a gluon 21
+  std::vector<int> allowedParents { -1, 1, -2, 2, -3, 3, -4, 4, -5, 5, -21, 21 };
+  if( !(std::find(allowedParents.begin(),
+		 allowedParents.end(), ancestorPID)
+	!= allowedParents.end()) ){
+    // So it is not from g, u, d, s, c, b. Check if it is from pi0 or not.
+    if( abs(ancestorPID) == 111 )
+      return MATCHED_FROM_PI0;
+    else
+      return MATCHED_FROM_OTHER_SOURCES;
+  }
+  return MATCHED_FROM_GUDSCB;
+
+}
+
+// ---------------------------------------------------------------------
+
+void GammaJetAnalysis::findFirstNonPhotonMother(const reco::Candidate *particle,
+					int &ancestorPID, int &ancestorStatus)
+{
+
+  if( particle == 0 ){
+    printf("PhotonNtuplerMVADemoMiniAOD: ERROR! null candidate pointer, this should never happen\n");
+    return;
+  }
+
+  // Is this the first non-photon parent? If yes, return, otherwise
+  // go deeper into recursion
+  if( abs(particle->pdgId()) == 22 ){
+    findFirstNonPhotonMother(particle->mother(0), ancestorPID, ancestorStatus);
+  }else{
+    ancestorPID = particle->pdgId();
+    ancestorStatus = particle->status();
+  }
+
+  return;
+}
+
+// ---------------------------------------------------------------------
+
+int GammaJetAnalysis::matchToTruthAlternative(const reco::Photon &pho,
+	      const edm::Handle<std::vector<reco::GenParticle>> &genParticles)
+{
+
+  //
+  // Explicit loop and geometric matching method
+  //
+
+  int isMatched = UNMATCHED;
+
+  for(size_t i=0; i<genParticles->size();i++){
+    const reco::Candidate *particle = &(*genParticles)[i];
+    int pid = particle->pdgId();
+    int ancestorPID = -999;
+    int ancestorStatus = -999;
+    findFirstNonPhotonMother(particle, ancestorPID, ancestorStatus);
+    if( pid ==22 && TMath::Abs( ancestorPID ) <= 22 ){
+      double dr = ROOT::Math::VectorUtil::DeltaR( pho.p4(), particle->p4() );
+      float dpt = fabs( (pho.pt() - particle->pt() )/particle->pt());
+      if (dr < 0.2 && dpt < 0.2){
+	isMatched = MATCHED_FROM_GUDSCB;
+	if( ancestorPID == 22 ){
+	  printf("Ancestor of a photon is a photon!\n");
+	}
+      }
+    }
+  }
+
+  return isMatched;
+}
+
+// ---------------------------------------------------------------------
 
 //define this as a plug-in
 

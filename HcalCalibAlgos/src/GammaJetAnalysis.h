@@ -126,6 +126,20 @@ public:
 
   std::vector<float> pfTkIsoWithVertex(const reco::Photon* localPho1, edm::Handle<reco::PFCandidateCollection> pfHandle, edm::Handle<reco::VertexCollection> vtxHandle, float dRmax, float dRvetoBarrel, float dRvetoEndcap, float ptMin, float dzMax, float dxyMax, reco::PFCandidate::ParticleType pfToUse);
 
+  // borrowed from https://github.com/ikrav/ElectronWork/blob/master/ElectronNtupler/plugins/PhotonNtuplerMVADemoMiniAOD.cc
+  enum TPhotonMatchType_t { UNMATCHED = 0,
+			    MATCHED_FROM_GUDSCB,
+			    MATCHED_FROM_PI0,
+			    MATCHED_FROM_OTHER_SOURCES };
+
+  int matchToTruth(const reco::Photon &pho,
+   const edm::Handle<std::vector<reco::GenParticle>>  &genParticles);
+  int matchToTruthAlternative(const reco::Photon &pho,
+      const edm::Handle<std::vector<reco::GenParticle>>  &genParticles);
+  void findFirstNonPhotonMother(const reco::Candidate *particle,
+				int &ancestorPID, int &ancestorStatus);
+
+
 private:
   virtual void beginJob();//(const edm::EventSetup&);
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
@@ -253,6 +267,7 @@ private:
 
   float tagPho_genPt_, tagPho_genEnergy_, tagPho_genEta_, tagPho_genPhi_;
   float tagPho_genDeltaR_;
+  int tagPho_isTrue_, tagPho_isTrueAlternative_;
 
   // Particle-flow jets
   // leading Et jet info
