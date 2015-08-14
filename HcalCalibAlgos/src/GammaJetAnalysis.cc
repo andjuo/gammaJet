@@ -1687,7 +1687,8 @@ GammaJetAnalysis::endJob() {
   if(doPFJets_){
     pf_tree_->Write();
   }
-  edm::LogWarning("GammaJetAnalysis") << "nSelected=" << nSelected_;
+  edm::LogWarning("GammaJetAnalysis") << "nProcessed=" << nProcessed_
+				      << ", nSelected=" << nSelected_;
 
   // write miscItems
   // Save info about the triggers and other misc items
