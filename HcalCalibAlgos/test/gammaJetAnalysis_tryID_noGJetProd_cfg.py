@@ -66,7 +66,7 @@ process.GammaJetAnalysis.photonTriggers += cms.vstring(
 
 # a clone without CHS
 process.GammaJetAnalysis_noCHS= process.GammaJetAnalysis.clone()
-process.GammaJetAnalysis_noCHS.rootHistFilename = cms.string('PhoJet_tree_nonCHS_noGJetProd.root')
+process.GammaJetAnalysis_noCHS.rootHistFilename = cms.string('PhoJet_tree_nonCHS_tryID_noGJetProd.root')
 # for 7XY use ak4* instead of ak5
 process.GammaJetAnalysis_noCHS.pfJetCollName = cms.string('ak4PFJets')
 process.GammaJetAnalysis_noCHS.pfJetCorrName = cms.string('ak4PFL2L3')
