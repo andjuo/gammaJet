@@ -67,5 +67,6 @@ process.seq_ak4PFCHS= cms.Sequence( process.particleFlowPtrs *
                                     process.pfNoPileUpJMESequence *
                                     process.ak4PFJetsCHS )
 
-process.p = cms.Path( process.seq_ak4PFCHS * process.GammaJetProd )
+process.p = cms.Path( process.seq_ak4PFCHS * process.GammaJetProd
+                      * process.GammaJetProdFilter)
 process.e = cms.EndPath(process.GammaJetRecos)

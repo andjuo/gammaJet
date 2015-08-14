@@ -50,5 +50,5 @@ process.GammaJetRecos = cms.OutputModule("PoolOutputModule",
    fileName = cms.untracked.string('gjet.root')
 )
 
-process.p = cms.Path(process.GammaJetProd)
+process.p = cms.Path(process.GammaJetProd * process.GammaJetProdFilter )
 process.e = cms.EndPath(process.GammaJetRecos)

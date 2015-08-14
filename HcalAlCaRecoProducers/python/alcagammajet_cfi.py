@@ -1,6 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
-# producer for alcadijets (HCAL gamma-jet)
+# producer for HcalAlCaGammaJet
 GammaJetProd = cms.EDProducer("AlCaGammaJetProducer",
                               PhoInput = cms.InputTag("gedPhotons"),
                               PFjetInput = cms.InputTag("ak4PFJetsCHS"),
@@ -29,3 +29,6 @@ GammaJetProd = cms.EDProducer("AlCaGammaJetProducer",
                               )
 
 
+# filter for HcalAlCaGammaJet
+# based on (int goodEvent) flag from GammaJetProd
+GammaJetProdFilter = cms.EDFilter("AlCaGammaJetFilter")

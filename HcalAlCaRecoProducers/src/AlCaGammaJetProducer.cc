@@ -129,6 +129,7 @@ AlCaGammaJetProducer::AlCaGammaJetProducer(const edm::ParameterSet& iConfig) : n
   tok_BS_          = consumes<reco::BeamSpot>(labelBeamSpot_);
 
   // register your products
+  produces<int>("goodEvent"); // cf.AlCaGammaJetFilter.cc
   produces<reco::PhotonCollection>(labelPhoton_.encode());
   produces<reco::PFJetCollection>(labelPFJet_.encode());
   produces<edm::SortedCollection<HBHERecHit,edm::StrictWeakOrdering<HBHERecHit>>>(labelHBHE_.encode());
@@ -350,8 +351,12 @@ void AlCaGammaJetProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
   std::auto_ptr<edm::ValueMap<Bool_t> > miniTightPhoton(new edm::ValueMap<Bool_t>());
   std::vector<Bool_t> looseFlags, tightFlags;
 
+  std::auto_ptr<int> goodEvent(new int);
+
   // See if this event is useful
   bool accept = select(photon, pfjets);
+  *goodEvent = (accept) ? 1:0;
+
   if (accept) {
     nSelect_++;
 
@@ -472,6 +477,7 @@ void AlCaGammaJetProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
   }
 
   //Put them in the event
+  iEvent.put ( goodEvent , "goodEvent");
   edm::OrphanHandle<reco::PhotonCollection> outputPhotonHandle =
     iEvent.put( miniPhotonCollection,      labelPhoton_.encode());
   iEvent.put( miniPFjetCollection,       labelPFJet_.encode());
