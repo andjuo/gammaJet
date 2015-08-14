@@ -23,7 +23,7 @@
 #include <boost/regex.hpp>
 #include "TH1D.h"
 
-inline void HERE(const char *msg, int show=1) {
+inline void HERE(const char *msg, int show=0) {
   if (show && msg) edm::LogWarning("GammaJetAnalysis") << msg;
 }
 
@@ -280,8 +280,8 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
   iEvent.getByToken(tok_run2TightId_, run2tightPhoQual);
   if (!run2loosePhoQual.isValid() || !run2mediumPhoQual.isValid() ||
       !run2tightPhoQual.isValid()) {
-    edm::LogWarning("GammaJetAnalysis");
-    std::cout << "Failed to get photon quality for Run2 flags";
+    edm::LogWarning("GammaJetAnalysis")
+      << "Failed to get photon quality for Run2 flags";
     return;
   }
 
@@ -1687,7 +1687,8 @@ GammaJetAnalysis::endJob() {
   if(doPFJets_){
     pf_tree_->Write();
   }
-  std::cout << "nSelected=" << nSelected_ << std::endl;
+  edm::LogWarning("GammaJetAnalysis") << "nSelected=" << nSelected_;
+
   // write miscItems
   // Save info about the triggers and other misc items
   {
@@ -2263,7 +2264,8 @@ void GammaJetAnalysis::findFirstNonPhotonMother(const reco::Candidate *particle,
 {
 
   if( particle == 0 ){
-    printf("PhotonNtuplerMVADemoMiniAOD: ERROR! null candidate pointer, this should never happen\n");
+    edm::LogWarning("GammaJetAnalysis")
+      << "ERROR! null candidate pointer, this should never happen";
     return;
   }
 
@@ -2302,9 +2304,9 @@ int GammaJetAnalysis::matchToTruthAlternative(const reco::Photon &pho,
       float dpt = fabs( (pho.pt() - particle->pt() )/particle->pt());
       if (dr < 0.2 && dpt < 0.2){
 	isMatched = MATCHED_FROM_GUDSCB;
-	if( ancestorPID == 22 ){
-	  printf("Ancestor of a photon is a photon!\n");
-	}
+	//if( ancestorPID == 22 ){
+	//  std::cout << "Ancestor of a photon is a photon!\n";
+	//}
       }
     }
   }
