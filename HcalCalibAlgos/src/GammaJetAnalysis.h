@@ -158,6 +158,8 @@ private:
   edm::InputTag photonIDTightCollName_, photonIDLooseCollName_; // photon ID. Obsolete
   edm::InputTag photonRun2IdTightCollName_, photonRun2IdMediumCollName_,
     photonRun2IdLooseCollName_; // photon ID for Run2 from official tools
+  edm::InputTag egmPhoChIsoMap_, egmPhoNhIsoMap_, egmPhoPhIsoMap_;
+  edm::FileInPath egmEffAreasChConfigFile_, egmEffAreasNhConfigFile_, egmEffAreasPhConfigFile_;
   std::string prodProcess_;         // the producer process for AOD=2
 
   bool allowNoPhoton_; // whether module is used for dijet analysis
@@ -186,6 +188,9 @@ private:
   edm::EDGetTokenT<edm::ValueMap<Bool_t> >          tok_run2LooseId_;
   edm::EDGetTokenT<edm::ValueMap<Bool_t> >          tok_run2MediumId_;
   edm::EDGetTokenT<edm::ValueMap<Bool_t> >          tok_run2TightId_;
+  edm::EDGetTokenT<edm::ValueMap<float> >           tok_egmPhoChIso_; // not EA-corrected
+  edm::EDGetTokenT<edm::ValueMap<float> >           tok_egmPhoNhIso_;
+  edm::EDGetTokenT<edm::ValueMap<float> >           tok_egmPhoPhIso_;
   edm::EDGetTokenT<reco::PFCandidateCollection>     tok_PFCand_;
   edm::EDGetTokenT<reco::VertexCollection>          tok_PV_;
   edm::EDGetTokenT<reco::GsfElectronCollection>     tok_GsfElec_;
@@ -236,7 +241,7 @@ private:
   std::vector<std::vector<float> >  tagPho_pfiso_mycharged03v_ ;
   float tagPho_pfiso_mycharged03_;
   float tagPho_full5x5sigmaIetaIeta_;
-  float tagPho_chIso_, tagPho_nhIso_, tagPho_phIso_; // isolation from official tools
+  float tagPho_egmChIso_, tagPho_egmNhIso_, tagPho_egmPhIso_; // isolation from official tools
   int tagPho_pixelSeed_;
   int tagPho_ConvSafeEleVeto_;
   int tagPho_idTight_, tagPho_idLoose_;
@@ -338,6 +343,15 @@ private:
       return ( (a.photon()->pt()) > (b.photon()->pt()) );
     }
   };
+
+  // method cloned from
+  // constructor from RecoEgamma/EgammaTools/src/EffectiveAreas.cc
+  // EffectiveAreas define the vectors as private members
+  int loadEffectiveAreas(const std::string &filename,
+			 std::vector<float> &absEtaMinV,
+			 std::vector<float> &absEtaMaxV,
+			 std::vector<float> &effAreaV);
+
 
 };
 

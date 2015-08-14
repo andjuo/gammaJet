@@ -6,6 +6,7 @@
 #include "RecoEgamma/EgammaElectronAlgos/interface/ElectronHcalHelper.h"
 #include "RecoEgamma/EgammaTools/interface/ConversionTools.h"
 #include "RecoEgamma/EgammaTools/interface/ConversionFinder.h"
+#include "RecoEgamma/EgammaTools/interface/EffectiveAreas.h"
 #include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
 #include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
@@ -18,6 +19,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <fstream>
 #include <boost/regex.hpp>
 #include "TH1D.h"
 
@@ -95,6 +97,9 @@ GammaJetAnalysis::GammaJetAnalysis(const edm::ParameterSet& iConfig) {
   photonRun2IdTightCollName_ = iConfig.getParameter<edm::InputTag>("photonRun2IdTightMap");
   photonRun2IdMediumCollName_= iConfig.getParameter<edm::InputTag>("photonRun2IdMediumMap");
   photonRun2IdLooseCollName_ = iConfig.getParameter<edm::InputTag>("photonRun2IdLooseMap");
+  egmPhoChIsoMap_ = iConfig.getParameter<edm::InputTag>("egmPhoChIsoMap");
+  egmPhoNhIsoMap_ = iConfig.getParameter<edm::InputTag>("egmPhoNhIsoMap");
+  egmPhoPhIsoMap_ = iConfig.getParameter<edm::InputTag>("egmPhoPhIsoMap");
 
   prodProcess_         = "MYGAMMAJET";
   if (iConfig.exists("prodProcess"))
@@ -113,6 +118,18 @@ GammaJetAnalysis::GammaJetAnalysis(const edm::ParameterSet& iConfig) {
   doGenJets_           = iConfig.getParameter<bool>("doGenJets");
   workOnAOD_           = iConfig.getParameter<int>("workOnAOD");
   ignoreHLT_           = iConfig.getUntrackedParameter<bool>("ignoreHLT",false);
+
+  egmEffAreasChConfigFile_ = iConfig.getParameter<edm::FileInPath>("egmEffAreasChConfigFile");
+  egmEffAreasNhConfigFile_ = iConfig.getParameter<edm::FileInPath>("egmEffAreasNhConfigFile");
+  egmEffAreasPhConfigFile_ = iConfig.getParameter<edm::FileInPath>("egmEffAreasPhConfigFile");
+
+  // test access
+  EffectiveAreas effAreasCh( (iConfig.getParameter<edm::FileInPath>("egmEffAreasChConfigFile")).fullPath() );
+  effAreasCh.printEffectiveAreas();
+  EffectiveAreas effAreasNh( (iConfig.getParameter<edm::FileInPath>("egmEffAreasNhConfigFile")).fullPath() );
+  effAreasNh.printEffectiveAreas();
+  EffectiveAreas effAreasPh( (iConfig.getParameter<edm::FileInPath>("egmEffAreasPhConfigFile")).fullPath() );
+  effAreasPh.printEffectiveAreas();
 
   eventWeight_ = 1.0;
   eventPtHat_ = 0.;
@@ -184,6 +201,10 @@ GammaJetAnalysis::GammaJetAnalysis(const edm::ParameterSet& iConfig) {
       HLTlabel.ReplaceAll("HLT","reHLT");
     tok_TrigRes_     = consumes<edm::TriggerResults>(edm::InputTag(prod,HLTlabel.Data(),an));
   }
+
+  tok_egmPhoChIso_ = consumes<edm::ValueMap<float> >(egmPhoChIsoMap_);
+  tok_egmPhoNhIso_ = consumes<edm::ValueMap<float> >(egmPhoNhIsoMap_);
+  tok_egmPhoPhIso_ = consumes<edm::ValueMap<float> >(egmPhoPhIsoMap_);
 
   hJet1Pt = new TH1D("hJet1Pt","Jet1Pt;p_{jet1,T};count",100,0.,500.);
   hJet2Pt = new TH1D("hJet2Pt","Jet2Pt;p_{jet2,T};count",100,0.,500.);
@@ -514,9 +535,9 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     tagPho_pfiso_mycharged03v_.clear();
     tagPho_pfiso_mycharged03_=0;
     tagPho_full5x5sigmaIetaIeta_=0;
-    tagPho_chIso_=0;
-    tagPho_nhIso_=0;
-    tagPho_phIso_=0;
+    tagPho_egmChIso_=0;
+    tagPho_egmNhIso_=0;
+    tagPho_egmPhIso_=0;
     tagPho_pixelSeed_=0;
     tagPho_ConvSafeEleVeto_=0;
     tagPho_idTight_=0;
@@ -560,10 +581,28 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     // maybe implement a check whether it matches the "official map" value
     tagPho_full5x5sigmaIetaIeta_ = photon_tag.photon()->full5x5_sigmaIetaIeta();
 
+    // get photon reference
+    edm::Ref<reco::PhotonCollection> photonRef(photons, photon_tag.idx());
+    HERE(Form("got photon ref, photon_tag.idx()=%d",photon_tag.idx()));
+
     // get isolation values from the EG isolation map
-    tagPho_chIso_= -1;
-    tagPho_nhIso_= -1;
-    tagPho_phIso_= -1;
+    edm::Handle<edm::ValueMap<float> > h_egmPhoChIso, h_egmPhoNhIso, h_egmPhoPhIso;
+    iEvent.getByToken(tok_egmPhoChIso_, h_egmPhoChIso);
+    iEvent.getByToken(tok_egmPhoNhIso_, h_egmPhoNhIso);
+    iEvent.getByToken(tok_egmPhoPhIso_, h_egmPhoPhIso);
+    if (!h_egmPhoChIso.isValid() || !h_egmPhoNhIso.isValid() ||
+	!h_egmPhoPhIso.isValid()) {
+      edm::LogWarning("GammaJetAnalysis") << "Failed to get egm isolation";
+      tagPho_egmChIso_= -1;
+      tagPho_egmNhIso_= -1;
+      tagPho_egmPhIso_= -1;
+      //return;
+    }
+    else {
+      tagPho_egmChIso_ = (*h_egmPhoChIso)[photonRef];
+      tagPho_egmNhIso_ = (*h_egmPhoNhIso)[photonRef];
+      tagPho_egmPhIso_ = (*h_egmPhoPhIso)[photonRef];
+    }
 
     HERE("got isolation");
 
@@ -572,8 +611,6 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
 
     HERE("get id");
     HERE(Form("new code! loose photon qual size=%d",int(loosePhotonQual->size())));
-    edm::Ref<reco::PhotonCollection> photonRef(photons, photon_tag.idx());
-    HERE(Form("got photon ref, photon_tag.idx()=%d",photon_tag.idx()));
 
     //std::cout << "loosePhotonQual->at(photon_tag.idx())=" << (*loosePhotonQual)[photonRef] << std::endl;
 
@@ -1418,9 +1455,9 @@ void GammaJetAnalysis::beginJob()
     tree->Branch("tagPho_pfiso_mycharged03",&tagPho_pfiso_mycharged03_, "tagPho_pfiso_mycharged03/F");
     tree->Branch("tagPho_pfiso_mycharged03v","std::vector<std::vector<float> >", &tagPho_pfiso_mycharged03v_);
     tree->Branch("tagPho_full5x5sigmaIetaIeta",&tagPho_full5x5sigmaIetaIeta_, "tagPho_full5x5sigmaIetaIeta/F");
-    tree->Branch("tagPho_chIso", &tagPho_chIso_, "tagPho_chIso/F");
-    tree->Branch("tagPho_nhIso", &tagPho_nhIso_, "tagPho_nhIso/F");
-    tree->Branch("tagPho_phIso", &tagPho_phIso_, "tagPho_phIso/F");
+    tree->Branch("tagPho_egmChIso", &tagPho_egmChIso_, "tagPho_egmChIso/F");
+    tree->Branch("tagPho_egmNhIso", &tagPho_egmNhIso_, "tagPho_egmNhIso/F");
+    tree->Branch("tagPho_egmPhIso", &tagPho_egmPhIso_, "tagPho_egmPhIso/F");
     tree->Branch("tagPho_pixelSeed",    &tagPho_pixelSeed_,    "tagPho_pixelSeed/I");
     tree->Branch("tagPho_ConvSafeEleVeto", &tagPho_ConvSafeEleVeto_, "tagPho_ConvSafeEleVeto/I");
     tree->Branch("tagPho_idTight",&tagPho_idTight_, "tagPho_idTight/I");
@@ -1656,6 +1693,49 @@ GammaJetAnalysis::endJob() {
     misc_tree_->Branch("jetTriggerNames",&jetTrigNamesV_);
     misc_tree_->Branch("nProcessed",&nProcessed_,"nProcessed/l");
     misc_tree_->Branch("nSelected",&nSelected_,"nSelected/l");
+
+    std::vector<std::string> photonRun2IdV;
+    photonRun2IdV.push_back(photonRun2IdTightCollName_.encode());
+    photonRun2IdV.push_back(photonRun2IdMediumCollName_.encode());
+    photonRun2IdV.push_back(photonRun2IdLooseCollName_.encode());
+    photonRun2IdV.push_back(egmPhoChIsoMap_.encode());
+    photonRun2IdV.push_back(egmPhoNhIsoMap_.encode());
+    photonRun2IdV.push_back(egmPhoPhIsoMap_.encode());
+    misc_tree_->Branch("photonRun2IdV",&photonRun2IdV);
+
+    // Save effective areas
+    // Since EffectiveAreas class does not allow access to its data members
+    // we need to copy them
+    //EffectiveAreas effAreasCh( egmEffAreasChConfigFile_.fullPath() );
+    //effAreasCh.printEffectiveAreas();
+    //EffectiveAreas effAreasNh( egmEffAreasNhConfigFile_.fullPath() );
+    //effAreasNh.printEffectiveAreas();
+    //EffectiveAreas effAreasPh( egmEffAreasPhConfigFile_.fullPath() );
+    //effAreasPh.printEffectiveAreas();
+
+    std::vector<float> chIsoEA_absEtaMin, chIsoEA_absEtaMax, chIsoEA_val;
+    std::vector<float> nhIsoEA_absEtaMin, nhIsoEA_absEtaMax, nhIsoEA_val;
+    std::vector<float> phIsoEA_absEtaMin, phIsoEA_absEtaMax, phIsoEA_val;
+    if (!loadEffectiveAreas( egmEffAreasChConfigFile_.fullPath(),
+			     chIsoEA_absEtaMin,chIsoEA_absEtaMax,chIsoEA_val) ||
+	!loadEffectiveAreas( egmEffAreasNhConfigFile_.fullPath(),
+			     nhIsoEA_absEtaMin,nhIsoEA_absEtaMax,nhIsoEA_val) ||
+	!loadEffectiveAreas( egmEffAreasPhConfigFile_.fullPath(),
+			     phIsoEA_absEtaMin,phIsoEA_absEtaMax,phIsoEA_val)) {
+      edm::LogWarning("GammaJetAnalysis")
+	<< "failed to get effective areas\n";
+    }
+
+    misc_tree_->Branch("egmChIsoEA_absEtaMin",&chIsoEA_absEtaMin);
+    misc_tree_->Branch("egmChIsoEA_absEtaMax",&chIsoEA_absEtaMax);
+    misc_tree_->Branch("egmChIsoEA_eaValue",&chIsoEA_val);
+    misc_tree_->Branch("egmNhIsoEA_absEtaMin",&nhIsoEA_absEtaMin);
+    misc_tree_->Branch("egmNhIsoEA_absEtaMax",&nhIsoEA_absEtaMax);
+    misc_tree_->Branch("egmNhIsoEA_eaValue",&nhIsoEA_val);
+    misc_tree_->Branch("egmPhIsoEA_absEtaMin",&phIsoEA_absEtaMin);
+    misc_tree_->Branch("egmPhIsoEA_absEtaMax",&phIsoEA_absEtaMax);
+    misc_tree_->Branch("egmPhIsoEA_eaValue",&phIsoEA_val);
+
     if (hJet1Pt) hJet1Pt->Write();
     if (hJet2Pt) hJet2Pt->Write();
     if (hJet3Pt) hJet3Pt->Write();
@@ -2054,6 +2134,64 @@ int GammaJetAnalysis::getEtaPhi(const DetId id)
 int GammaJetAnalysis::getEtaPhi(const HcalDetId id)
 {
   return id.rawId() & 0x3FFF; // Get 14 least-significant digits
+}
+
+// ---------------------------------------------------------------------
+
+// Copied constructor from RecoEgamma/EgammaTools/src/EffectiveAreas.cc
+//
+
+int GammaJetAnalysis::loadEffectiveAreas(const std::string &filename,
+					 std::vector<float> &absEtaMinV,
+					 std::vector<float> &absEtaMaxV,
+					 std::vector<float> &effAreaV)
+{
+
+  absEtaMinV.clear();
+  absEtaMaxV.clear();
+  effAreaV.clear();
+
+  // Open the file with the effective area constants
+  std::ifstream inputFile;
+  inputFile.open(filename.c_str());
+  if( !inputFile.is_open() ) {
+    //throw cms::Exception("EffectiveAreas config failure")
+    edm::LogWarning("GammaJetAnalysis")
+      << "failed to open the file " << filename_.Data() << std::endl;
+    return 0;
+  }
+
+  // Read file line by line
+  int ok=1;
+  std::string line;
+  const float undef = -999;
+  while( getline(inputFile, line) && ok ){
+    if(line[0]=='#') continue; // skip the comments lines
+    float etaMin = undef, etaMax = undef, effArea = undef;
+    std::stringstream ss(line);
+    ss >>  etaMin >> etaMax >> effArea;
+    // In case if the format is messed up, there are letters
+    // instead of numbers, or not exactly three numbers in the line,
+    // it is likely that one or more of these vars never changed
+    // the original "undef" value:
+    if( etaMin==undef || etaMax==undef || effArea==undef ) {
+      //throw cms::Exception("EffectiveAreas config failure")
+      edm::LogWarning("GammaJetAnalysis")
+	<< "wrong file format, file name " << filename_.Data() << std::endl;
+      ok=0;
+    }
+
+    absEtaMinV.push_back( etaMin );
+    absEtaMaxV.push_back( etaMax );
+    effAreaV  .push_back( effArea );
+  }
+
+  if (!ok) {
+    absEtaMinV.clear();
+    absEtaMaxV.clear();
+    effAreaV.clear();
+  }
+  return 1;
 }
 
 // ---------------------------------------------------------------------
