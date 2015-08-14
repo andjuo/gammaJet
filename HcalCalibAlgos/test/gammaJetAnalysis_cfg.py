@@ -2,26 +2,51 @@ import FWCore.ParameterSet.Config as cms
 process = cms.Process('ANALYSIS')
 
 process.load('Configuration.StandardSequences.Services_cff')
-# Specify IdealMagneticField ESSource (needed for CMSSW 730)
-process.load("Configuration.StandardSequences.GeometryRecoDB_cff")
-process.load("Configuration.StandardSequences.MagneticField_cff")
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
-from Configuration.AlCa.autoCond import autoCond
-process.GlobalTag.globaltag=autoCond['run2_mc']
 
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.MessageLogger.categories+=cms.untracked.vstring('GammaJetAnalysis')
-process.MessageLogger.cerr.FwkReport.reportEvery=cms.untracked.int32(1000)
+#process.MessageLogger.cerr.FwkReport.reportEvery=cms.untracked.int32(1000)
 
-#load the gammaJet analyzer
+# Specify IdealMagneticField ESSource (needed for CMSSW 730)
+process.load("Configuration.Geometry.GeometryIdeal_cff")
+process.load("MagneticField.Engine.autoMagneticFieldProducer_cfi")
+from Configuration.AlCa.autoCond import autoCond
+#process.GlobalTag.globaltag=autoCond['startup']
+process.GlobalTag.globaltag = 'PHYS14_25_V1::All'
+
+# get the official photonID producer
+#process.load("RecoEgamma/PhotonIdentification/PhotonIDValueMapProducer_cfi")
+process.load("RecoEgamma/PhotonIdentification/egmPhotonIDs_cff")
+
+from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
+# turn on VID producer, indicate data format  to be
+# DataFormat.AOD or DataFormat.MiniAOD, as appropriate
+#if useAOD == True :
+dataFormat = DataFormat.AOD
+#else :
+#dataFormat = DataFormat.MiniAOD
+
+switchOnVIDPhotonIdProducer(process, dataFormat)
+
+# define which IDs we want to produce
+my_id_modules = ['RecoEgamma.PhotonIdentification.Identification.cutBasedPhotonID_PHYS14_PU20bx25_V2_cff']
+
+#add them to the VID producer
+for idmod in my_id_modules:
+          setupAllVIDIdsInModule(process,idmod,setupVIDPhotonSelection)
+
+
+#load the response corrections calculator
 process.load('Calibration.HcalCalibAlgos.gammaJetAnalysis_cfi')
 #  needed for nonCHS
+#process.load('JetMETCorrections.Configuration.JetCorrectors_cff')
 process.load('JetMETCorrections.Configuration.JetCorrectionProducers_cff')
 
 # run over files
-process.GammaJetAnalysis.rootHistFilename = cms.string('PhoJet_tree_CHS.root')
+process.GammaJetAnalysis.rootHistFilename = cms.string('PhoJet_tree_CHS_tryID.root')
 process.GammaJetAnalysis.doPFJets = cms.bool(True)
-process.GammaJetAnalysis.doGenJets = cms.bool(False)
+process.GammaJetAnalysis.doGenJets = cms.bool(True)
 
 # trigger names should not end with '_'
 process.GammaJetAnalysis.photonTriggers = cms.vstring(
@@ -41,7 +66,7 @@ process.GammaJetAnalysis.photonTriggers += cms.vstring(
 
 # a clone without CHS
 process.GammaJetAnalysis_noCHS= process.GammaJetAnalysis.clone()
-process.GammaJetAnalysis_noCHS.rootHistFilename = cms.string('PhoJet_tree_nonCHS.root')
+process.GammaJetAnalysis_noCHS.rootHistFilename = cms.string('PhoJet_tree_nonCHS_tryID.root')
 # for 7XY use ak4* instead of ak5
 process.GammaJetAnalysis_noCHS.pfJetCollName = cms.string('ak4PFJets')
 process.GammaJetAnalysis_noCHS.pfJetCorrName = cms.string('ak4PFL2L3')
@@ -49,14 +74,20 @@ process.GammaJetAnalysis_noCHS.pfJetCorrName = cms.string('ak4PFL2L3')
 process.source = cms.Source("PoolSource", 
                             fileNames = cms.untracked.vstring(
         'file:../../HcalAlCaRecoProducers/test/gjet.root'
-#    '/store/relval/CMSSW_7_3_0/RelValPhotonJets_Pt_10_13/GEN-SIM-RECO/MCRUN2_73_V7-v1/00000/522CE329-7B81-E411-B6C3-0025905A6110.root',
-#    '/store/relval/CMSSW_7_3_0/RelValPhotonJets_Pt_10_13/GEN-SIM-RECO/MCRUN2_73_V7-v1/00000/5279D224-7B81-E411-BCAA-002618943930.root'
-#    '/store/relval/CMSSW_7_3_0/RelValPhotonJets_Pt_10_13/GEN-SIM-RECO/MCRUN2_73_V7-v1/00000/522CE329-7B81-E411-B6C3-0025905A6110.root'
-#    '/store/relval/CMSSW_7_4_0_pre6/RelValPhotonJets_Pt_10_13/GEN-SIM-RECO/MCRUN2_74_V1-v1/00000/6EC8FCC8-E2A8-E411-9506-002590596468.root'
+#   'file:/tmp/andriusj/6EC8FCC8-E2A8-E411-9506-002590596468.root'
+#        '/store/relval/CMSSW_7_4_0_pre6/RelValPhotonJets_Pt_10_13/GEN-SIM-RECOMCRUN2_74_V1-v1/00000/6EC8FCC8-E2A8-E411-9506-002590596468.root'
+#        'file:/tmp/andriusj/FileA_468.root',
+#        'file:/tmp/andriusj/FileB_0D6.root'
     )
 )
 
+
+
+#To have the same number of histograms, do not run over GenJets
+#process.GammaJetAnalysis.doGenJets = cms.bool(False)
+
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
+process.MessageLogger.cerr.FwkReport.reportEvery=cms.untracked.int32(1000)
 process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(False) )
 
 # name of the process that used the GammaJetProd producer
@@ -66,6 +97,27 @@ process.GammaJetAnalysis.workOnAOD = cms.int32(2)
 process.GammaJetAnalysis.doGenJets = cms.bool(False)
 process.GammaJetAnalysis.debug     = cms.untracked.int32(0)
 
+process.egmPhotonIDSequence.remove('photonMVAValueMapProducer')
+
+process.photonIDValueMapProducer.ebReducedRecHitCollection = cms.InputTag("GammaJetProd","reducedEcalRecHitsEB",'MYGAMMAJET')
+process.photonIDValueMapProducer.eeReducedRecHitCollection = cms.InputTag("GammaJetProd","reducedEcalRecHitsEE",'MYGAMMAJET')
+process.photonIDValueMapProducer.esReducedRecHitCollection = cms.InputTag("GammaJetProd","reducedEcalRecHitsES",'MYGAMMAJET')
+process.photonIDValueMapProducer.vertices = cms.InputTag("GammaJetProd","offlinePrimaryVertices",'MYGAMMAJET')
+process.photonIDValueMapProducer.src = cms.InputTag("GammaJetProd","gedPhotons",'MYGAMMAJET')
+process.photonIDValueMapProducer.particleBasedIsolation = cms.InputTag("GammaJetProd","particleBasedIsolationForGedPhotons",'MYGAMMAJET')
+
+process.egmPhotonIDs.physicsObjectSrc = cms.InputTag("GammaJetProd","gedPhotons",'MYGAMMAJET')
+
 process.p = cms.Path(
+    process.photonIDValueMapProducer *
+    process.egmPhotonIDs *
     process.GammaJetAnalysis
 )
+
+# To check what collections are present, define the output module
+process.Output = cms.OutputModule("PoolOutputModule",
+    outputCommands = cms.untracked.vstring('keep *'),
+    fileName = cms.untracked.string('gjetOut.root')
+)
+
+#process.e = cms.EndPath(process.Output)
