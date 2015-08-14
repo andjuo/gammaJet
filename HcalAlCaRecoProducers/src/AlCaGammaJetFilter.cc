@@ -2,7 +2,7 @@
 //
 // Package:    Calibration/HcalAlCaRecoProducers/AlCaGammaJetFilter
 // Class:      AlCaGammaJetFilter
-// 
+//
 /**\class AlCaGammaJetFilter AlCaGammaJetFilter.cc Calibration/HcalAlCaRecoProducers/AlCaGammaJetFilter/src/AlCaGammaJetFilter.cc
 
  Description: Enable filtering of good events based on the AlCaGammaJetProducer info
@@ -80,7 +80,7 @@ AlCaGammaJetFilter::AlCaGammaJetFilter(const edm::ParameterSet& iConfig)
 
 AlCaGammaJetFilter::~AlCaGammaJetFilter()
 {
- 
+
    // do anything here that needs to be done at desctruction time
    // (e.g. close files, deallocate resources etc.)
 
@@ -119,14 +119,12 @@ AlCaGammaJetFilter::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
 }
 
 // ------------ method called once each job just before starting event loop  ------------
-void 
-AlCaGammaJetFilter::beginJob()
+void AlCaGammaJetFilter::beginJob()
 {
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
-void 
-AlCaGammaJetFilter::endJob() {
+void AlCaGammaJetFilter::endJob() {
   edm::LogWarning("AlCaGammaJet")
     << "AlCaGammaJetFilter: nProcessed=" << nProcessed_
     << ", nSelected=" << nSelected_;
