@@ -32,3 +32,11 @@ GammaJetProd = cms.EDProducer("AlCaGammaJetProducer",
 # filter for HcalAlCaGammaJet
 # based on (int goodEvent) flag from GammaJetProd
 GammaJetProdFilter = cms.EDFilter("AlCaGammaJetFilter")
+
+# selector for HcalAlCaGammaJet
+GammaJetSelector = cms.EDFilter("AlCaGammaJetSelector",
+                                PhoInput = cms.InputTag("gedPhotons"),
+                                PFjetInput = cms.InputTag("ak4PFJetsCHS"),
+                                MinPtPhoton = cms.double(10.0),
+                                MinPtJet = cms.double(10.0)
+                                )

@@ -5,7 +5,7 @@ import FWCore.ParameterSet.Config as cms
 #------------------------------------------------
 from Calibration.HcalAlCaRecoProducers.alcagammajet_cfi import *
 from Calibration.HcalAlCaRecoProducers.gammajetHLT_cfi import *
-seqALCARECOHcalCalGammaJet = cms.Sequence(gammajetHLT*GammaJetProd
-                                          *GammaJetProdFilter
-                                          )
-
+#seqALCARECOHcalCalGammaJet = cms.Sequence(gammajetHLT*GammaJetProd
+#                                          *GammaJetProdFilter
+#)
+seqALCARECOHcalCalGammaJet = cms.Sequence(gammajetHLT*GammaJetSelector)

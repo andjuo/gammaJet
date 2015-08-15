@@ -30,6 +30,10 @@ cms.untracked.vstring(
 process.load("Calibration.HcalAlCaRecoProducers.alcagammajet_cfi")
 process.load("Calibration.HcalAlCaRecoProducers.ALCARECOHcalCalGammaJet_Output_cff")
 
+#process.p = cms.Path(process.GammaJetProd * process.GammaJetProdFilter )
+#process.p = cms.Path(process.GammaJetProd * process.GammaJetProdFilter * process.GammaJetSelector )
+process.p = cms.Path(process.GammaJetSelector)
+
 #process.GammaJetRecos = cms.OutputModule("PoolOutputModule",
 #    outputCommands = cms.untracked.vstring('drop *',
 ##                 'keep recoPhotonCores_*_*_*',
@@ -46,9 +50,11 @@ process.load("Calibration.HcalAlCaRecoProducers.ALCARECOHcalCalGammaJet_Output_c
 #)
 
 process.GammaJetRecos = cms.OutputModule("PoolOutputModule",
+   SelectEvents = cms.untracked.PSet(
+        SelectEvents = cms.vstring('p')
+   ),
    outputCommands = process.OutALCARECOHcalCalGammaJet.outputCommands,
    fileName = cms.untracked.string('gjet.root')
 )
 
-process.p = cms.Path(process.GammaJetProd * process.GammaJetProdFilter )
 process.e = cms.EndPath(process.GammaJetRecos)
