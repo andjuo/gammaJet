@@ -32,7 +32,6 @@ GammaJetAnalysis = cms.EDAnalyzer('GammaJetAnalysis',
                                   egmEffAreasChConfigFile = cms.FileInPath('RecoEgamma/PhotonIdentification/data/PHYS14/effAreaPhotons_cone03_pfChargedHadrons_V2.txt'),
                                   egmEffAreasNhConfigFile = cms.FileInPath('RecoEgamma/PhotonIdentification/data/PHYS14/effAreaPhotons_cone03_pfNeutralHadrons_V2.txt'),
                                   egmEffAreasPhConfigFile = cms.FileInPath('RecoEgamma/PhotonIdentification/data/PHYS14/effAreaPhotons_cone03_pfPhotons_V2.txt'),
-                                  prodProcess = cms.untracked.string('reRECO'),
                                   allowNoPhoton       = cms.bool(False),
                                   photonJetDPhiMin    = cms.double(2.0),  # 0.75 pi= 2.356, 0.7 pi=2.2
                                   photonPtMin         = cms.double(15.),

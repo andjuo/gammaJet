@@ -101,10 +101,6 @@ GammaJetAnalysis::GammaJetAnalysis(const edm::ParameterSet& iConfig) {
   egmPhoNhIsoMap_ = iConfig.getParameter<edm::InputTag>("egmPhoNhIsoMap");
   egmPhoPhIsoMap_ = iConfig.getParameter<edm::InputTag>("egmPhoPhIsoMap");
 
-  prodProcess_         = "MYGAMMAJET";
-  if (iConfig.exists("prodProcess"))
-    prodProcess_ = iConfig.getUntrackedParameter<std::string>("prodProcess");
-
   allowNoPhoton_       = iConfig.getParameter<bool>("allowNoPhoton");
   photonPtMin_         = iConfig.getParameter<double>("photonPtMin");
   photonJetDPhiMin_    = iConfig.getParameter<double>("photonJetDPhiMin");
@@ -137,71 +133,28 @@ GammaJetAnalysis::GammaJetAnalysis(const edm::ParameterSet& iConfig) {
   nSelected_ = 0;
 
   //Get the tokens
-  // FAST FIX
-  if (workOnAOD_ < 2) { // origin data file
-    tok_Photon_      = consumes<reco::PhotonCollection>(photonCollName_);
-    tok_PFJet_       = consumes<reco::PFJetCollection>(pfJetCollName_);
-    tok_GenJet_      = consumes<std::vector<reco::GenJet> >(genJetCollName_);
-    tok_GenPart_     = consumes<std::vector<reco::GenParticle> >(genParticleCollName_);
-    tok_GenEvInfo_   = consumes<GenEventInfoProduct>(genEventInfoName_);
-    tok_HBHE_        = consumes<edm::SortedCollection<HBHERecHit,edm::StrictWeakOrdering<HBHERecHit> > >(hbheRecHitName_);
-    tok_HF_          = consumes<edm::SortedCollection<HFRecHit,edm::StrictWeakOrdering<HFRecHit> > >(hfRecHitName_);
-    tok_HO_          = consumes<edm::SortedCollection<HORecHit,edm::StrictWeakOrdering<HORecHit> > >(hoRecHitName_);
-    tok_tightPhoton_ = consumes<edm::ValueMap<Bool_t> >(photonIDTightCollName_);
-    tok_loosePhoton_ = consumes<edm::ValueMap<Bool_t> >(photonIDLooseCollName_);
-    tok_run2TightId_ = consumes<edm::ValueMap<Bool_t> >(photonRun2IdTightCollName_);
-    tok_run2MediumId_ = consumes<edm::ValueMap<Bool_t> >(photonRun2IdMediumCollName_);
-    tok_run2LooseId_ = consumes<edm::ValueMap<Bool_t> >(photonRun2IdLooseCollName_);
-    tok_PFCand_      = consumes<reco::PFCandidateCollection>(edm::InputTag("particleFlow"));
-    tok_PV_      = consumes<reco::VertexCollection>(pvCollName_);
-    tok_GsfElec_     = consumes<reco::GsfElectronCollection>(electronCollName_);
-    tok_Rho_         = consumes<double>(rhoCollection_);
-    tok_Conv_        = consumes<reco::ConversionCollection>(conversionCollName_);
-    tok_BS_          = consumes<reco::BeamSpot>(offlineBSName_);
-    tok_PFMET_       = consumes<reco::PFMETCollection>(pfMETColl);
-    tok_PFType1MET_  = consumes<reco::PFMETCollection>(pfType1METColl);
-    tok_TrigRes_     = consumes<edm::TriggerResults>(edm::InputTag("TriggerResults::HLT"));
-
-  } else {
-    // FAST FIX
-    const char* prod= "GammaJetProd";
-    if (prodProcess_.size()==0) {
-      edm::LogError("GammaJetAnalysis") << "prodProcess needs to be defined";
-      throw edm::Exception(edm::errors::ProductNotFound);
-    }
-    const char* an= prodProcess_.c_str();
-    edm::LogWarning("GammaJetAnalysis") << "FAST FIX: changing " << photonCollName_
-					<< " to" << edm::InputTag(prod,photonCollName_,an);
-    tok_Photon_      = consumes<reco::PhotonCollection>(edm::InputTag(prod,photonCollName_,an));
-    tok_PFJet_       = consumes<reco::PFJetCollection>(edm::InputTag(prod,pfJetCollName_,an));
-    tok_GenJet_      = consumes<std::vector<reco::GenJet> >(edm::InputTag(prod,genJetCollName_,an));
-    tok_GenPart_     = consumes<std::vector<reco::GenParticle> >(edm::InputTag(prod,genParticleCollName_,an));
-    tok_GenEvInfo_   = consumes<GenEventInfoProduct>(edm::InputTag(prod,genEventInfoName_,an));
-    tok_HBHE_        = consumes<edm::SortedCollection<HBHERecHit,edm::StrictWeakOrdering<HBHERecHit> > >(edm::InputTag(prod,hbheRecHitName_,an));
-    tok_HF_          = consumes<edm::SortedCollection<HFRecHit,edm::StrictWeakOrdering<HFRecHit> > >(edm::InputTag(prod,hfRecHitName_,an));
-    tok_HO_          = consumes<edm::SortedCollection<HORecHit,edm::StrictWeakOrdering<HORecHit> > >(edm::InputTag(prod,hoRecHitName_,an));
-    tok_tightPhoton_ = consumes<edm::ValueMap<Bool_t> >(edm::InputTag(prod,edm::InputTag("PhotonIDProdGED:PhotonCutBasedIDTight").encode(),an));
-    tok_loosePhoton_ = consumes<edm::ValueMap<Bool_t> >(edm::InputTag(prod,edm::InputTag("PhotonIDProdGED","PhotonCutBasedIDLoose").encode(),an));
-    //tok_loosePhotonV_ = consumes<std::vector<Bool_t> >(edm::InputTag(prod,photonIDLooseCollName_.encode(),an));
-    //tok_tightPhotonV_ = consumes<std::vector<Bool_t> >(edm::InputTag(prod,photonIDTightCollName_.encode(),an));
-    tok_run2TightId_ = consumes<edm::ValueMap<Bool_t> >(photonRun2IdTightCollName_);
-    tok_run2MediumId_ = consumes<edm::ValueMap<Bool_t> >(photonRun2IdMediumCollName_);
-    tok_run2LooseId_ = consumes<edm::ValueMap<Bool_t> >(photonRun2IdLooseCollName_);
-    tok_PFCand_      = consumes<reco::PFCandidateCollection>(edm::InputTag("particleFlow"));
-    //tok_PFCand_      = consumes<reco::PFCandidateCollection>(edm::InputTag(prod,"particleFlow",an));
-    tok_PV_      = consumes<reco::VertexCollection>(edm::InputTag(prod,pvCollName_,an));
-    tok_GsfElec_     = consumes<reco::GsfElectronCollection>(edm::InputTag(prod,electronCollName_,an));
-    //tok_Rho_         = consumes<double>(edm::InputTag(prod,rhoCollection_.label(),an));
-    tok_Rho_         = consumes<double>(rhoCollection_);
-    tok_Conv_        = consumes<reco::ConversionCollection>(edm::InputTag(prod,conversionCollName_,an));
-    tok_BS_          = consumes<reco::BeamSpot>(edm::InputTag(prod,offlineBSName_,an));
-    tok_PFMET_       = consumes<reco::PFMETCollection>(edm::InputTag(prod,pfMETColl.label(),an));
-    tok_PFType1MET_  = consumes<reco::PFMETCollection>(edm::InputTag(prod,pfType1METColl.label(),an));
-    TString HLTlabel = "TriggerResults::HLT";
-    if (prodProcess_.find("reRECO")!=std::string::npos)
-      HLTlabel.ReplaceAll("HLT","reHLT");
-    tok_TrigRes_     = consumes<edm::TriggerResults>(edm::InputTag(prod,HLTlabel.Data(),an));
-  }
+  tok_Photon_      = consumes<reco::PhotonCollection>(photonCollName_);
+  tok_PFJet_       = consumes<reco::PFJetCollection>(pfJetCollName_);
+  tok_GenJet_      = consumes<std::vector<reco::GenJet> >(genJetCollName_);
+  tok_GenPart_     = consumes<std::vector<reco::GenParticle> >(genParticleCollName_);
+  tok_GenEvInfo_   = consumes<GenEventInfoProduct>(genEventInfoName_);
+  tok_HBHE_        = consumes<edm::SortedCollection<HBHERecHit,edm::StrictWeakOrdering<HBHERecHit> > >(hbheRecHitName_);
+  tok_HF_          = consumes<edm::SortedCollection<HFRecHit,edm::StrictWeakOrdering<HFRecHit> > >(hfRecHitName_);
+  tok_HO_          = consumes<edm::SortedCollection<HORecHit,edm::StrictWeakOrdering<HORecHit> > >(hoRecHitName_);
+  tok_tightPhoton_ = consumes<edm::ValueMap<Bool_t> >(photonIDTightCollName_);
+  tok_loosePhoton_ = consumes<edm::ValueMap<Bool_t> >(photonIDLooseCollName_);
+  tok_run2TightId_ = consumes<edm::ValueMap<Bool_t> >(photonRun2IdTightCollName_);
+  tok_run2MediumId_ = consumes<edm::ValueMap<Bool_t> >(photonRun2IdMediumCollName_);
+  tok_run2LooseId_ = consumes<edm::ValueMap<Bool_t> >(photonRun2IdLooseCollName_);
+  tok_PFCand_      = consumes<reco::PFCandidateCollection>(edm::InputTag("particleFlow"));
+  tok_PV_      = consumes<reco::VertexCollection>(pvCollName_);
+  tok_GsfElec_     = consumes<reco::GsfElectronCollection>(electronCollName_);
+  tok_Rho_         = consumes<double>(rhoCollection_);
+  tok_Conv_        = consumes<reco::ConversionCollection>(conversionCollName_);
+  tok_BS_          = consumes<reco::BeamSpot>(offlineBSName_);
+  tok_PFMET_       = consumes<reco::PFMETCollection>(pfMETColl);
+  tok_PFType1MET_  = consumes<reco::PFMETCollection>(pfType1METColl);
+  tok_TrigRes_     = consumes<edm::TriggerResults>(edm::InputTag("TriggerResults::HLT"));
 
   tok_egmPhoChIso_ = consumes<edm::ValueMap<float> >(egmPhoChIsoMap_);
   tok_egmPhoNhIso_ = consumes<edm::ValueMap<float> >(egmPhoNhIsoMap_);

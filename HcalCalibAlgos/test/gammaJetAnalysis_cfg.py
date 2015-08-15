@@ -44,7 +44,7 @@ process.load('Calibration.HcalCalibAlgos.gammaJetAnalysis_cfi')
 process.load('JetMETCorrections.Configuration.JetCorrectionProducers_cff')
 
 # run over files
-process.GammaJetAnalysis.rootHistFilename = cms.string('PhoJet_tree_CHS_tryID.root')
+process.GammaJetAnalysis.rootHistFilename = cms.string('PhoJet_tree_CHS.root')
 process.GammaJetAnalysis.doPFJets = cms.bool(True)
 process.GammaJetAnalysis.doGenJets = cms.bool(True)
 
@@ -66,7 +66,7 @@ process.GammaJetAnalysis.photonTriggers += cms.vstring(
 
 # a clone without CHS
 process.GammaJetAnalysis_noCHS= process.GammaJetAnalysis.clone()
-process.GammaJetAnalysis_noCHS.rootHistFilename = cms.string('PhoJet_tree_nonCHS_tryID.root')
+process.GammaJetAnalysis_noCHS.rootHistFilename = cms.string('PhoJet_tree_nonCHS.root')
 # for 7XY use ak4* instead of ak5
 process.GammaJetAnalysis_noCHS.pfJetCollName = cms.string('ak4PFJets')
 process.GammaJetAnalysis_noCHS.pfJetCorrName = cms.string('ak4PFL2L3')
@@ -90,23 +90,12 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 process.MessageLogger.cerr.FwkReport.reportEvery=cms.untracked.int32(1000)
 process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(False) )
 
-# name of the process that used the GammaJetProd producer
-process.GammaJetAnalysis.prodProcess = cms.untracked.string('MYGAMMAJET')
-# specify 'workOnAOD=2' to apply tokens from GammaJetProd producer
-process.GammaJetAnalysis.workOnAOD = cms.int32(2)
-process.GammaJetAnalysis.doGenJets = cms.bool(False)
+# specify 'workOnAOD=1' if the input file is AOD, otherwise put 0
+process.GammaJetAnalysis.workOnAOD = cms.int32(0)
+process.GammaJetAnalysis.doGenJets = cms.bool(True)
 process.GammaJetAnalysis.debug     = cms.untracked.int32(0)
 
 process.egmPhotonIDSequence.remove('photonMVAValueMapProducer')
-
-process.photonIDValueMapProducer.ebReducedRecHitCollection = cms.InputTag("GammaJetProd","reducedEcalRecHitsEB",'MYGAMMAJET')
-process.photonIDValueMapProducer.eeReducedRecHitCollection = cms.InputTag("GammaJetProd","reducedEcalRecHitsEE",'MYGAMMAJET')
-process.photonIDValueMapProducer.esReducedRecHitCollection = cms.InputTag("GammaJetProd","reducedEcalRecHitsES",'MYGAMMAJET')
-process.photonIDValueMapProducer.vertices = cms.InputTag("GammaJetProd","offlinePrimaryVertices",'MYGAMMAJET')
-process.photonIDValueMapProducer.src = cms.InputTag("GammaJetProd","gedPhotons",'MYGAMMAJET')
-process.photonIDValueMapProducer.particleBasedIsolation = cms.InputTag("GammaJetProd","particleBasedIsolationForGedPhotons",'MYGAMMAJET')
-
-process.egmPhotonIDs.physicsObjectSrc = cms.InputTag("GammaJetProd","gedPhotons",'MYGAMMAJET')
 
 process.p = cms.Path(
     process.photonIDValueMapProducer *

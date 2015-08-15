@@ -174,7 +174,6 @@ private:
     photonRun2IdLooseCollName_; // photon ID for Run2 from official tools
   edm::InputTag egmPhoChIsoMap_, egmPhoNhIsoMap_, egmPhoPhIsoMap_;
   edm::FileInPath egmEffAreasChConfigFile_, egmEffAreasNhConfigFile_, egmEffAreasPhConfigFile_;
-  std::string prodProcess_;         // the producer process for AOD=2
 
   bool allowNoPhoton_; // whether module is used for dijet analysis
   double photonPtMin_;   // lowest value of the leading photon pT
