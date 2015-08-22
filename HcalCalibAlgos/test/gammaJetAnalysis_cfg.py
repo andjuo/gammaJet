@@ -92,7 +92,7 @@ process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(False) )
 
 # specify 'workOnAOD=1' if the input file is AOD, otherwise put 0
 process.GammaJetAnalysis.workOnAOD = cms.int32(0)
-process.GammaJetAnalysis.doGenJets = cms.bool(True)
+process.GammaJetAnalysis.doGenJets = cms.bool(False)
 process.GammaJetAnalysis.debug     = cms.untracked.int32(0)
 
 process.egmPhotonIDSequence.remove('photonMVAValueMapProducer')
