@@ -1365,6 +1365,7 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     pf_tree_->Fill();
     nSelected_++;
     if (tagPho_idRun2flag_>0) nSelectedLoosePhotonID_++;
+    }
   }
   return;
 
