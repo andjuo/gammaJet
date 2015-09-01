@@ -95,10 +95,10 @@ process.GammaJetAnalysis.workOnAOD = cms.int32(0)
 process.GammaJetAnalysis.doGenJets = cms.bool(False)
 process.GammaJetAnalysis.debug     = cms.untracked.int32(0)
 
-process.egmPhotonIDSequence.remove('photonMVAValueMapProducer')
+#process.egmPhotonIDSequence.remove('photonMVAValueMapProducer')
 
 process.p = cms.Path(
-    process.photonIDValueMapProducer *
+#    process.photonIDValueMapProducer *
     process.egmPhotonIDs *
     process.GammaJetAnalysis
 )

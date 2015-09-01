@@ -20,6 +20,7 @@ OutALCARECOHcalCalGammaJet_noDrop = cms.PSet(
             'keep *_PhotonIDProdGED_PhotonCutBasedIDTight_*',
             'keep *_gedGsfElectrons_*_*',
             'keep *_allConversions_*_*',
+            'keep *_photonIDValueMapProducer_gedPhotons_*',
 
             'keep recoPFJets_ak4PFJetsCHS_*_*',
 
