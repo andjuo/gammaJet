@@ -34,10 +34,11 @@ process.source = cms.Source("PoolSource",
 # )
 )
 
-process.load("Calibration.HcalAlCaRecoProducers.alcagammajet_cfi")
+process.load("Calibration.HcalAlCaRecoProducers.ALCARECOHcalCalGammaJet_cff")
 process.load("Calibration.HcalAlCaRecoProducers.ALCARECOHcalCalGammaJet_Output_cff")
 
-process.p = cms.Path(process.GammaJetSelector)
+#process.GammaJetSelector.ApplyPhoQualityCuts = cms.bool(False)
+process.p = cms.Path(process.seqALCARECOHcalCalGammaJet_noHLT)
 
 # Two output modules are defined:
 # 1) GammaJetRecos_Debug is intended to determine the needed collections.
@@ -117,7 +118,7 @@ process.GammaJetRecos_Debug = cms.OutputModule("PoolOutputModule",
             'keep *_ak4GenJets_*_*',
             'keep GenEventInfoProduct_generator_*_*'
             ),
-    fileName = cms.untracked.string('gjet.root')
+    fileName = cms.untracked.string('gjet_252126_debug.root')
 )
 
 process.GammaJetRecos = cms.OutputModule("PoolOutputModule",
@@ -125,7 +126,7 @@ process.GammaJetRecos = cms.OutputModule("PoolOutputModule",
         SelectEvents = cms.vstring('p')
    ),
    outputCommands = process.OutALCARECOHcalCalGammaJet.outputCommands,
-   fileName = cms.untracked.string('gjet.root')
+   fileName = cms.untracked.string('gjet_252126.root')
 )
 
 #process.e = cms.EndPath(process.GammaJetRecos_Debug)
