@@ -113,7 +113,7 @@ process.GammaJetRecos_Debug = cms.OutputModule("PoolOutputModule",
             'keep *_ak4GenJets_*_*',
             'keep GenEventInfoProduct_generator_*_*'
             ),
-    fileName = cms.untracked.string('gjet.root')
+    fileName = cms.untracked.string('gjet_debug.root')
 )
 
 process.GammaJetRecos = cms.OutputModule("PoolOutputModule",
