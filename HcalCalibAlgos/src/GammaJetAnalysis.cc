@@ -1661,6 +1661,7 @@ GammaJetAnalysis::endJob() {
     misc_tree_->Branch("jetTriggerNames",&jetTrigNamesV_);
     misc_tree_->Branch("nProcessed",&nProcessed_,"nProcessed/l");
     misc_tree_->Branch("nSelected",&nSelected_,"nSelected/l");
+    misc_tree_->Branch("nSelectedLoosePhotonID",&nSelectedLoosePhotonID_,"nSelectedLoosePhotonID/l");
 
     std::vector<std::string> photonRun2IdV;
     photonRun2IdV.push_back(photonRun2IdTightCollName_.encode());
