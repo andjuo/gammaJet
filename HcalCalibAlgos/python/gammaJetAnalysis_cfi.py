@@ -44,6 +44,10 @@ GammaJetAnalysis = cms.EDAnalyzer('GammaJetAnalysis',
                                   doPFJets            = cms.bool(True),
                                   doGenJets           = cms.bool(True),
                                   debug               = cms.untracked.int32(0),
-                                  debugHLTTrigNames   = cms.untracked.int32(2),
+    # debugHLTTrigNames:
+    # 0 - no info,
+    # 1 - print HLT triggers containing '_Photon',
+    # 2 - print all HLT triggers and mark '_Photon' triggers
+                                  debugHLTTrigNames   = cms.untracked.int32(0),
                                   workOnAOD           = cms.int32(0)
                                   )
