@@ -29,10 +29,11 @@ cms.untracked.vstring(
  )
 )
 
-process.load("Calibration.HcalAlCaRecoProducers.alcagammajet_cfi")
+process.load("Calibration.HcalAlCaRecoProducers.ALCARECOHcalCalGammaJet_cff")
 process.load("Calibration.HcalAlCaRecoProducers.ALCARECOHcalCalGammaJet_Output_cff")
 
-process.p = cms.Path(process.GammaJetSelector)
+#process.GammaJetSelector.ApplyPhoQualityCuts = cms.bool(False)
+process.p = cms.Path(process.seqALCARECOHcalCalGammaJet_noHLT)
 
 # Two output modules are defined:
 # 1) GammaJetRecos_Debug is intended to determine the needed collections.

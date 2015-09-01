@@ -131,6 +131,7 @@ GammaJetAnalysis::GammaJetAnalysis(const edm::ParameterSet& iConfig) {
   eventPtHat_ = 0.;
   nProcessed_ = 0;
   nSelected_ = 0;
+  nSelectedLoosePhotonID_ = 0;
 
   //Get the tokens
   tok_Photon_      = consumes<reco::PhotonCollection>(photonCollName_);
@@ -1363,7 +1364,7 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     // fill photon+jet variables
     pf_tree_->Fill();
     nSelected_++;
-    }
+    if (tagPho_idRun2flag_>0) nSelectedLoosePhotonID_++;
   }
   return;
 
@@ -1641,7 +1642,8 @@ GammaJetAnalysis::endJob() {
     pf_tree_->Write();
   }
   edm::LogWarning("GammaJetAnalysis") << "nProcessed=" << nProcessed_
-				      << ", nSelected=" << nSelected_;
+				      << ", nSelected=" << nSelected_
+		      << ", nSelectedLoosePhotonID=" << nSelectedLoosePhotonID_;
 
   // write miscItems
   // Save info about the triggers and other misc items
