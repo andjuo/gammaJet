@@ -275,7 +275,7 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     else break;
   }
 
-  if (counter==0) {
+  if ((counter==0) && !allowNoPhoton_) {
     edm::LogWarning("GammaJetAnalysis") << "Code bug";
     return;
   }
@@ -315,6 +315,11 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
   }
   if (debug_>0)  edm::LogInfo("GammaJetAnalysis") << "nPhotons=" << nPhotons_
 						  <<  ", nPFJets=" << nPFJets_;
+
+  if (allowNoPhoton_ && (anyJetCount<2)) {
+    if (debug_>0) edm::LogInfo("GammaJetAnalysis") << "dijet not present";
+    return;
+  }
 
   HERE(Form("nPhotons_=%d, nPFJets_=%d",nPhotons_,nPFJets_));
 
@@ -767,12 +772,28 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     if (!pfjet_probe.isValid()) failSelPF |= 1;
     else {
       if (pfjet_probe.scaledEt() < jetEtMin_) failSelPF |= 2;
-      if (calc_dPhi(photon_tag,pfjet_probe) < photonJetDPhiMin_) failSelPF |= 3;
-      if (deltaR(photon_tag,pfjet_probe.jet())<0.5) failSelPF |= 4;
+      if (!allowNoPhoton_) {
+	if (calc_dPhi(photon_tag,pfjet_probe) < photonJetDPhiMin_) failSelPF |= 3;
+	if (deltaR(photon_tag,pfjet_probe.jet())<0.5) failSelPF |= 4;
+      }
       if (pf_2ndjet.isValid() && (pf_2ndjet.scaledEt() > jet2EtMax_))
 	failSelPF |= 5;
       if (pf_3rdjet.isValid() && (pf_3rdjet.scaledEt() > jet3EtMax_))
 	failSelPF |= 6;
+
+      // dijet selection
+      if (allowNoPhoton_) {
+	if (!pf_2ndjet.isValid()) failSelPF |=7;
+	else {
+	  const float cPi= 4*atan(1);
+	  float dphi= fabs(pfjet_probe.jet()->phi() - pf_2ndjet.jet()->phi());
+	  while (dphi>cPi) dphi = fabs(2*cPi - dphi);
+	  if (dphi < photonJetDPhiMin_) {
+	    failSelPF |= 8;
+	  }
+	}
+      }
+
     }
 
     if (!failSelPF) {
@@ -1656,6 +1677,7 @@ GammaJetAnalysis::endJob() {
     misc_tree_->Branch("ignoreHLT",&ignoreHLT_,"ignoreHLT/O");
     misc_tree_->Branch("doPFJets",&doPFJets_,"doPFJets/O");
     misc_tree_->Branch("doGenJets",&doGenJets_,"doGenJets/O");
+    misc_tree_->Branch("allowNoPhoton",&allowNoPhoton_,"allowNoPhoton/O");
     misc_tree_->Branch("workOnAOD",&workOnAOD_,"workOnAOD/I");
     misc_tree_->Branch("photonTriggerNames",&photonTrigNamesV_);
     misc_tree_->Branch("jetTriggerNames",&jetTrigNamesV_);
