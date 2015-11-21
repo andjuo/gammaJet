@@ -234,9 +234,11 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
   iEvent.getByToken(tok_run2TightId_, run2tightPhoQual);
   if (!run2loosePhoQual.isValid() || !run2mediumPhoQual.isValid() ||
       !run2tightPhoQual.isValid()) {
-    edm::LogWarning("GammaJetAnalysis")
-      << "Failed to get photon quality for Run2 flags";
-    return;
+    if (!allowNoPhoton_) {
+      edm::LogWarning("GammaJetAnalysis")
+	<< "Failed to get photon quality for Run2 flags";
+      return;
+    }
   }
 
   // sort photons by Et //
@@ -552,7 +554,7 @@ void GammaJetAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     iEvent.getByToken(tok_egmPhoPhIso_, h_egmPhoPhIso);
     if (!h_egmPhoChIso.isValid() || !h_egmPhoNhIso.isValid() ||
 	!h_egmPhoPhIso.isValid()) {
-      edm::LogWarning("GammaJetAnalysis") << "Failed to get egm isolation";
+      //edm::LogWarning("GammaJetAnalysis") << "Failed to get egm isolation";
       tagPho_egmChIso_= -1;
       tagPho_egmNhIso_= -1;
       tagPho_egmPhIso_= -1;
